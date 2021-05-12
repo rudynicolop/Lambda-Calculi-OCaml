@@ -1,3 +1,5 @@
+(menhir (flags --table --explain) (modules parser))
+
 (library
 	(name vanilla)
-	(libraries core))
+	(libraries core menhirLib))
