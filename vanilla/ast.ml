@@ -21,7 +21,9 @@ let rec index_of (eqb : 'a -> 'a -> bool) (a : 'a) (l : 'a list) : int option =
   | [] -> None
   | h :: t -> if eqb h a then Some 0 else index_of eqb a t >>| fun n -> n + 1
 
-(** Parsed syntax to De Bruijn Syntax *)
+(** Parsed syntax to De Bruijn Syntax
+\x.\y.x -> \.\.1
+*)
 let rec b_expr_of_p_expr (ctx : string list) (e : p_expr) : b_expr =
   match e with
   | Var x ->
@@ -32,10 +34,13 @@ let rec b_expr_of_p_expr (ctx : string list) (e : p_expr) : b_expr =
   | Lam (x,e) -> Lam ((), b_expr_of_p_expr (x :: ctx) e)
   | App (e1,e2) -> App (b_expr_of_p_expr ctx e1, b_expr_of_p_expr ctx e2)
 
+(** De Bruijn to Parsed Syntax
+    \.\.1 -> \x1.\x2.x1
+*)
 let rec p_expr_of_b_expr (depth : int) (e : b_expr) : p_expr =
   match e with
-  | Var n -> Var ("x" ^ string_of_int n)
-  | Lam (_,e) -> Lam ("x" ^ string_of_int depth, p_expr_of_b_expr (depth+1) e)
+  | Var n -> Var ("x" ^ string_of_int (depth - n))
+  | Lam (_,e) -> Lam ("x" ^ string_of_int (depth+1), p_expr_of_b_expr (depth+1) e)
   | App (e1,e2) -> App (p_expr_of_b_expr depth e1, p_expr_of_b_expr depth e2)
 
 let rec string_of_p_expr (e : p_expr) : string =
@@ -43,3 +48,9 @@ let rec string_of_p_expr (e : p_expr) : string =
   | Var x -> x
   | Lam (x,e) -> "(λ" ^ x ^ "." ^ (string_of_p_expr e) ^ ")"
   | App (e1,e2) -> "(" ^ string_of_p_expr e1 ^ " " ^ string_of_p_expr e2 ^ ")"
+
+let rec string_of_b_expr (e : b_expr) : string =
+  match e with
+  | Var n -> string_of_int n
+  | Lam (_,e) -> "(λ." ^ (string_of_b_expr e) ^ ")"
+  | App (e1,e2) -> "(" ^ string_of_b_expr e1 ^ " " ^ string_of_b_expr e2 ^ ")"

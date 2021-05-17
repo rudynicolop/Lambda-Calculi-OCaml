@@ -55,6 +55,7 @@ let rec applicative_stuck (e : b_expr) : bool =
   match e with
   | Var _ -> true
   | Lam (_,e) -> applicative_stuck e
+  | App (Lam _,_) -> false
   | App (e1,e2) -> applicative_stuck e1 && applicative_stuck e2
 
 (** Applicative-order *)
