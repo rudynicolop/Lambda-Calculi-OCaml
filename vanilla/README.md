@@ -12,7 +12,7 @@ e ::= x | fun x => e | e1 e2
 
 ## Running a program
 
-The command line template to run some program is.
+The command line template to run some program is:
 ```
 dune exec ./bin/main.exe vanilla -- <SEMANTICS> <FILENAME>
 ```
