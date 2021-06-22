@@ -1,3 +1,3 @@
 (fun x => fun y => x)
      ((fun x => x) (fun f => fun x => x))
-     ((fun x => x) (fun f => fun x => f x))
+     ((fun x => x x) (fun x => x x))

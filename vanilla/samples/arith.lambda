@@ -1,0 +1,4 @@
+(fun m => fun n =>
+     m (fun n => fun f => fun x => f (n f x)) n)
+       (fun f => fun x => f (f (f (f (f x)))))
+       (fun f => fun x => f (f (f x)))	

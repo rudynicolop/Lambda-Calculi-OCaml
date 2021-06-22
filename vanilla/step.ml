@@ -69,3 +69,27 @@ let rec applicative (e : b_expr) : b_expr option =
   | App (e1, e2) ->
     applicative e1 >>| fun e1' -> App (e1',e2)
   | _ -> None
+
+(** Call-by-need evaluation. *)
+(*let rec need (e : b_expr) : b_expr option =
+  match e with
+  | A*)
+
+(** HOAS cbn evaluation: *)
+let rec hoas_cbn (e : h_expr) : h_expr option =
+  match e with
+  | HApp (HLam f, e) -> some $ f e
+  | HApp (e1, e2) ->
+    hoas_cbn e1 >>| fun e1' -> HApp (e1', e2)
+  | _ -> None
+
+(** HOAS cbv evaluation: *)
+let rec hoas_cbv (e : h_expr) : h_expr option =
+  match e with
+  | HApp (HLam f, e) -> some $ f e
+  | HApp (e1, e2) ->
+    begin match hoas_cbv e1 with
+    | None -> hoas_cbv e2 >>| fun e2' -> HApp (e1, e2')
+    | Some e1' -> some $ HApp (e1', e2)
+    end
+  | _ -> None
