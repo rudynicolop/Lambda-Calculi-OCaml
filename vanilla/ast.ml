@@ -12,6 +12,11 @@ type p_expr = (string,string) expr
 (** De Bruijn Syntax. *)
 type b_expr = (int,unit) expr
 
+type ('a,'b) either = L of 'a | R of 'b
+
+(** Call by need syntax for lazy evaluation. *)
+type l_expr = ((int, int) either, unit) expr
+
 (** Higher-Order Syntax for Closed Terms. *)
 type h_expr =
   | HLam of (h_expr -> h_expr)

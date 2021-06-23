@@ -70,11 +70,6 @@ let rec applicative (e : b_expr) : b_expr option =
     applicative e1 >>| fun e1' -> App (e1',e2)
   | _ -> None
 
-(** Call-by-need evaluation. *)
-(*let rec need (e : b_expr) : b_expr option =
-  match e with
-  | A*)
-
 (** HOAS cbn evaluation: *)
 let rec hoas_cbn (e : h_expr) : h_expr option =
   match e with
@@ -93,3 +88,72 @@ let rec hoas_cbv (e : h_expr) : h_expr option =
     | Some e1' -> some $ HApp (e1', e2)
     end
   | _ -> None
+
+(** Call-by-need evaluation. *)
+
+let rec nshift (c : int) (i : int) (e : l_expr) : l_expr =
+  match e with
+  | Var (L n) -> if n < c then Var (L n) else Var (L (n + i))
+  | Var (R _) -> e
+  | Lam (_,e) -> Lam ((), nshift (c + 1) i e)
+  | App (e1,e2) -> App (nshift c i e1, nshift c i e2)
+
+(** Beta-reduction substitution. *)
+let rec nsub (m : int) (esub : l_expr) (e : l_expr) : l_expr =
+  match e with
+  | Var (L n) -> if n = m then esub else Var (L n)
+  | Var (R _) -> e
+  | Lam (_,e) -> Lam ((), nsub (m + 1) (nshift 0 1 esub) e)
+  | App (e1,e2) -> App (nsub m esub e1, nsub m esub e2)
+
+(** Beta-reduction of [(fun x => e1) e2 -> e1{e2/x}] *)
+let nbr (e1 : l_expr) (e2 : l_expr) : l_expr =
+  nshift 0 (-1) $ nsub 0 (nshift 0 1 e2) e1
+
+(** Lazy substitution. *)
+let rec lsub (m : int) (esub : l_expr) (e : l_expr) : l_expr =
+  match e with
+  | Var (L _) -> e
+  | Var (R n) -> if n = m then esub else Var (L n)
+  | Lam (_,e) -> Lam ((), lsub m (nshift 0 1 esub) e)
+  | App (e1,e2) -> App (lsub m esub e1, lsub m esub e2)
+
+type ('a,'b) state = 'a option * 'b
+
+let (>>==) (a,st : ('a,'b) state) (f : 'a -> 'c option) : ('c,'b) state =
+  a >>= f, st
+
+let (>>||) (a,st : ('a,'b) state) (f : 'a -> 'c) : ('c,'b) state =
+  a >>| f, st
+
+let (>=>) (a,st : ('a,'b) state)
+    (f : 'b -> 'a -> ('c,'b) state) : ('c,'b) state =
+  match a with
+  | None -> None, st
+  | Some a -> f st a
+
+let update (a,_ : ('a,'b) state) (st : 'b) = a,st
+
+let rec insert (n : int) (a : 'a) (l : 'a list) : 'a list =
+  match n, l with
+  | _, [] -> []
+  | 0, _ :: t -> a :: t
+  | _, h :: t -> h :: insert (n - 1) a t
+
+(** Lazy normal-order evaluation. *)
+let rec need
+    (env : l_expr list) (e : l_expr) : (l_expr, l_expr list) state =
+  match e with
+  | Lam (_,e) -> need env e >>|| fun e' -> Lam ((), e')
+  | App (Lam (_,e1), e2) ->
+    Some (nbr e1 $ Var (R (List.length env))), env @ [e2]
+  | App (Var (R n), e2) ->
+    begin match List.nth env n with
+      | Some (Lam _ as e1) -> some $ App (e1, e2), env
+      | Some e1 ->
+        need env e1 >=> fun env e1' ->
+          Some e, insert n e1' env
+      | None -> None, env
+    end
+  | App (e1, e2) -> need env e1 >>|| fun e1' -> App (e1', e2)
+  | _ -> None, env
