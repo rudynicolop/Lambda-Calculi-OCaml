@@ -81,7 +81,7 @@ let rec hoas_cbn (e : h_expr) : h_expr option =
 (** HOAS cbv evaluation: *)
 let rec hoas_cbv (e : h_expr) : h_expr option =
   match e with
-  | HApp (HLam f, e) -> some $ f e
+  | HApp (HLam f, (HLam _ as e)) -> some $ f e
   | HApp (e1, e2) ->
     begin match hoas_cbv e1 with
     | None -> hoas_cbv e2 >>| fun e2' -> HApp (e1, e2')
