@@ -1,3 +1,7 @@
+(menhir (flags --table --explain) (modules parser))
+
+(ocamllex (modules lexer))
+
 (library
 	(name stlc)
 	(libraries core menhirLib))

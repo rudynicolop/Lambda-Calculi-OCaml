@@ -1,0 +1,4 @@
+(fun n: (False -> False) -> False -> False =>
+     fun f: False -> False =>
+     fun z: False => f (n f z))
+     (fun f: False -> False => fun z: False => f (f z))

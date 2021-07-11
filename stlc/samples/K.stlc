@@ -1,0 +1,3 @@
+(fun x : False -> False => fun y : False -> False => x)
+     ((fun x: False -> False => x) (fun x: False => x))
+     (fun x: False => x)

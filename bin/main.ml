@@ -1,66 +1,77 @@
 open Core
 
+(** Command flags. *)
+let cbv_flag = "-cbv"
+let cbn_flag = "-cbn"
+let appl_flag = "-appl"
+let normal_flag = "-normal"
+let cbv_hoas_flag = "-cbv-hoas"
+let cbn_hoas_flag = "-cbn-hoas"
+let type_flag = "-type"
+
+(** Command summaries. *)
+let cbv_summary = "call by value"
+let cbn_summary = "call by name"
+let appl_summary = "full applicative order"
+let normal_summary = "full normal order"
+let type_summary = "typing derivation"
+
+let my_ignore (_:'a) : unit = ()
+
+let command_template f msg =
+  Command.basic ~summary:msg
+    Command.Param.(
+      map
+        (anon ("filename" %: string))
+        ~f:(fun filename _ -> f filename))
+  
 module RunVanilla = struct
   open Vanilla
   open Pipe
   open Step
 
-  let cbv_command =
-    Command.basic ~summary:"call-by-value"
-      Command.Param.(
-        map
-          (anon ("filename" %: string))
-          ~f:(fun filename -> fun _ -> pipe_b_expr cbv filename))
+  let b_expr_command red =
+    red |> pipe_b_expr |> command_template
 
-  let normal_command =
-    Command.basic ~summary:"normal-order"
-      Command.Param.(
-        map
-          (anon ("filename" %: string))
-          ~f:(fun filename -> fun _ -> pipe_b_expr normal filename))
-
-  let cbn_command =
-    Command.basic ~summary:"call-by-name"
-      Command.Param.(
-        map
-          (anon ("filename" %: string))
-          ~f:(fun filename -> fun _ -> pipe_b_expr cbn filename))
-      
-  let applicative_command =
-    Command.basic ~summary:"applicative"
-      Command.Param.(
-        map
-          (anon ("filename" %: string))
-          ~f:(fun filename -> fun _ -> pipe_b_expr applicative filename))
-
-  let hoas_cbv_command =
-    Command.basic ~summary:"cbv with closed terms"
-      Command.Param.(
-        map
-          (anon ("filename" %: string))
-          ~f:(fun filename -> fun _ -> pipe_h_expr hoas_cbv filename))
-
-  let hoas_cbn_command =
-    Command.basic ~summary:"cbn with closed terms"
-      Command.Param.(
-        map
-          (anon ("filename" %: string))
-          ~f:(fun filename -> fun _ -> pipe_h_expr hoas_cbn filename))
+  let hoas_command red =
+    red |> pipe_h_expr |> command_template
 
   let command =
     Command.group
       ~summary:"Run a vanilla lambda calculus programm"
-      ["-cbv",cbv_command;
-       "-cbn",cbn_command;
-       "-app",applicative_command;
-       "-normal",normal_command;
-       "-cbv-hoas", hoas_cbv_command;
-       "-cbn-hoas", hoas_cbn_command]
+      [cbv_flag, b_expr_command cbv cbv_summary;
+       cbn_flag, b_expr_command cbn cbn_summary;
+       appl_flag, b_expr_command applicative appl_summary;
+       normal_flag, b_expr_command normal normal_summary;
+       cbv_hoas_flag, hoas_command hoas_cbv cbv_summary;
+       cbn_hoas_flag, hoas_command hoas_cbn cbn_summary]
+end
+
+module RunStlc = struct
+  open Stlc
+  open Pipe
+  open Reduce
+
+  let run_b_expr_command red =
+    red |> run_b_expr |> command_template
+  
+  let type_b_expr_command =
+    my_ignore >> parse_and_type |> command_template
+
+  let command =
+    Command.group
+      ~summary:"Run a vanilla lambda calculus programm"
+      [cbv_flag, run_b_expr_command cbv cbv_summary;
+       cbn_flag, run_b_expr_command cbn cbn_summary;
+       appl_flag, run_b_expr_command applicative appl_summary;
+       normal_flag, run_b_expr_command normal normal_summary;
+       type_flag, type_b_expr_command type_summary]
 end
 
 let command =
   Command.group
     ~summary:"Implementations of various lambda calculi"
-    ["vanilla", RunVanilla.command]
+    ["vanilla", RunVanilla.command;
+     "stlc", RunStlc.command]
 
 let () = Command.run ~version:"1.0" command
