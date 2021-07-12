@@ -7,7 +7,8 @@ open FunUtil
 (** Dynamic Semantics. *)
 
 (** Shifts free variables above a cutoff [c] by [i] *)
-let rec shift (c : int) (i : int) : b_expr -> b_expr = function
+let rec shift (c : int) (i : int)
+  : b_expr -> b_expr = function
   | Var n -> if n < c then Var n else Var (n + i)
   | Abs (_,t,e) -> Abs ((), t, shift (c + 1) i e)
   | App (e1,e2) -> App (shift c i e1, shift c i e2)

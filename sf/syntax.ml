@@ -18,27 +18,6 @@ type ('a,'b) expr =
   | TypAbs of 'b * ('a,'b) expr
   | TypApp of ('a,'b) expr * ('a,'b) typ
 
-let rec typ_map
-    ~fa:(fa: 'a -> 'c)
-    ~fb:(fb: 'b -> 'd) : ('a,'b) typ -> ('c,'d) typ = function
-  | TVar a -> TVar (fa a)
-  | TForall (b,t) -> TForall (fb b, typ_map ~fa:fa ~fb:fb t)
-  | TArrow (t1,t2) ->
-    TArrow (typ_map ~fa:fa ~fb:fb t1, typ_map ~fa:fa ~fb:fb t2)
-
-let rec expr_map
-    ~fa:(fa: 'a -> 'c)
-    ~fb:(fb: 'b -> 'd) : ('a,'b) expr -> ('c,'d) expr = function
-  | Var a -> Var (fa a)
-  | Abs (b,t,e) ->
-    Abs (fb b, typ_map ~fa:fa ~fb:fb t, expr_map ~fa:fa ~fb:fb e)
-  | App (e1,e2) ->
-    App (expr_map ~fa:fa ~fb:fb e1, expr_map ~fa:fa ~fb:fb e2)
-  | TypAbs (a,e) ->
-    TypAbs (fa a, expr_map ~fa:fa ~fb:fb e)
-  | TypApp (e,t) ->
-    TypApp (expr_map ~fa:fa ~fb:fb e, typ_map ~fa:fa ~fb:fb t)
-
 let rec typ_fold
     ~f:(f: 'a -> 'r)
     ~g:(g: 'b -> 'r -> 'r)
@@ -70,13 +49,13 @@ let rec expr_fold
     m (expr_fold ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e)
       (typ_fold ~f:f ~g:g ~h:h t)
 
-let typ_map' ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd) : ('a,'b) typ -> ('c,'d) typ =
+let typ_map ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd) : ('a,'b) typ -> ('c,'d) typ =
   typ_fold
     ~f:(fun a -> TVar (f a))
     ~g:(fun b t -> TForall (g b, t))
     ~h:(fun t1 t2 -> TArrow (t1, t2))
 
-let expr_map' ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd) : ('a,'b) expr -> ('c,'d) expr =
+let expr_map ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd) : ('a,'b) expr -> ('c,'d) expr =
   expr_fold
     ~f:(fun a -> TVar (f a))
     ~g:(fun b e -> TForall (g b,e))
@@ -87,14 +66,14 @@ let expr_map' ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd) : ('a,'b) expr -> ('c,'d) expr =
     ~l:(fun b e -> TypAbs (g b, e))
     ~m:(fun t e -> TypApp (t,e))
 
-let string_of_typ'
+let string_of_typ
     (f: 'a -> string) (g: 'b -> string) : ('a,'b) typ -> string =
   typ_fold
     ~f:f
     ~g:(fun b t -> "(∀" ^ g b ^ "." ^ t ^ ")")
     ~h:(fun t1 t2 -> "(" ^ t1 ^ "→" ^ t2 ^ ")")
 
-let string_of_expr'
+let string_of_expr
     (f : 'a -> string) (g : 'b -> string) : ('a,'b) expr -> string =
   expr_fold
     ~f:f
@@ -106,48 +85,25 @@ let string_of_expr'
     ~l:(fun b e -> "(" ^ "Λ" ^ g b ^ "." ^ e ^ ")")
     ~m:(fun e t -> "(" ^ e ^ " [" ^ t ^ "])")
 
-let rec string_of_typ
-  (fa: 'a -> string) (fb: 'b -> string) : ('a,'b) typ -> string = function
-  | TVar a -> fa a
-  | TForall (b,t) ->
-    "(∀" ^ fb b ^ "." ^ string_of_typ fa fb t ^ ")"
-  | TArrow (t1,t2) ->
-    "(" ^ string_of_typ fa fb t1 ^ "→" ^ string_of_typ fa fb t2 ^ ")"
-
-let rec string_of_expr
-    (fa: 'a -> string) (fb: 'b -> string) : ('a,'b) expr -> string = function
-  | Var a -> fa a
-  | Abs (b,t,e) ->
-    "(λ" ^ fb b ^ ":" ^ string_of_typ fa fb t ^
-    "." ^ string_of_expr fa fb e ^ ")"
-  | App (e1,e2) ->
-    "(" ^ string_of_expr fa fb e1 ^
-    " " ^ string_of_expr fa fb e2 ^ ")"
-  | TypAbs (b,e) ->
-    "(" ^ "Λ" ^ fb b ^ "." ^ string_of_expr fa fb e ^ ")"
-  | TypApp (e,t) ->
-    "(" ^ string_of_expr fa fb e ^
-    " [" ^ string_of_typ fa fb t ^ "])"
-
 (** Parsed syntax. *)
 type p_typ = (string,string) typ
 type p_expr = (string,string) expr
 
 let string_of_p_typ : p_typ -> string =
-  string_of_typ' (fun s -> s) (fun s -> s)
+  string_of_typ (fun s -> s) (fun s -> s)
 
 let string_of_p_expr : p_expr -> string =
-  string_of_expr' (fun s -> s) (fun s -> s)
+  string_of_expr (fun s -> s) (fun s -> s)
 
 (** De Bruijn syntax. *)
 type b_typ = (int,unit) typ
 type b_expr = (int,unit) expr
 
 let string_b_typ : b_typ -> string =
-  string_of_typ' string_of_int (fun _ -> "")
+  string_of_typ string_of_int (fun _ -> "")
 
 let string_b_expr : b_expr -> string =
-  string_of_expr' string_of_int (fun _ -> "")
+  string_of_expr string_of_int (fun _ -> "")
 
 let rec (=?) (t1: b_typ) (t2: b_typ) : bool =
   match t1, t2 with
