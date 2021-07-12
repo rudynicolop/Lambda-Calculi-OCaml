@@ -8,6 +8,9 @@ let ($) f x = f x
 
 let my_ignore (_:'a) : unit = ()
 
+(** Consume unused argument. *)
+let consume (f: 'b -> 'c) : 'a -> 'b -> 'c = fun _ -> f
+
 (** Multi-reduction. *)
 let rec multi_red
     (red : 'a -> 'a option)

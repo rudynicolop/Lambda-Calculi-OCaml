@@ -1,66 +1,59 @@
+open Util
+open FunUtil
 open Syntax
 
-let rec shift_typ (c: int) (i: int)
-  : b_typ -> b_typ = function
-  | TVar n ->
-    TVar (if n < c then n else n + i)
-  | TForall (_,t) ->
-    TForall ((), shift_typ (c + 1) i t)
-  | TArrow (t1,t2) ->
-    TArrow (shift_typ c i t1, shift_typ c i t2)
+let shift_typ (c: int) (i: int)
+  : b_typ -> b_typ =
+  typ_map_ctx
+    ~ctx:c ~succ:(consume $ (+) 1)
+    ~f:(fun c n -> if n < c then n else n + i)
+    ~g:(consume my_ignore)
 
-let rec shift_expr
+let shift_expr
     (ct: int) (ce: int) (it: int) (ie: int)
-  : b_expr -> b_expr = function
-  | Var n ->
-    Var (if n < ce then n else n + ie)
-  | Abs (_,t,e) ->
-    Abs ((), shift_typ ct it t,
-         shift_expr ct (ce + 1) it ie e)
-  | App (e1,e2) ->
-    App (shift_expr ct ce it ie e1,
-         shift_expr ct ce it ie e2)
-  | TypAbs (_,e) ->
-    TypAbs ((), shift_expr (ct + 1) ce it ie e)
-  | TypApp (e,t) ->
-    TypApp (shift_expr ct ce it ie e,
-            shift_typ ct it t)
+  : b_expr -> b_expr =
+  expr_map_ctx
+    ~tctx:ct ~ectx:ce ~succ:(consume $ (+) 1)
+    ~f:(fun c n -> if n < c then n else n + it)
+    ~g:(consume my_ignore)
+    ~h:(fun c n -> if n < c then n else n + ie)
+    ~i:(consume my_ignore)
 
 (** Substituting a [typ] into a [typ]. *)
-let rec typ_sub (n: int) (ts: b_typ)
-  : b_typ -> b_typ = function
-  | TVar m ->
-    if n = m then shift_typ 0 n ts else TVar m
-  | TForall (_,t) ->
-    TForall ((), typ_sub (n + 1) ts t)
-  | TArrow (t1,t2) ->
-    TArrow (typ_sub n ts t1, typ_sub n ts t2)
+let typ_sub (n: int) (ts: b_typ)
+  : b_typ -> b_typ =
+  typ_scheme
+    ~ctx:n ~succ:(consume $ (+) 1)
+    ~f:(fun n m -> if n = m then shift_typ 0 n ts else TVar m)
+    ~g:(consume my_ignore)
 
 (** Substituting a [expr] into a [expr]. *)
-let rec expr_sub (n: int) (es: b_expr)
-  : b_expr -> b_expr = function
-  | Var m ->
-    if n = m then shift_expr 0 0 0 n es else Var m
-  | Abs (_,t,e) ->
-    Abs ((), t, expr_sub (n + 1) es e)
-  | App (e1,e2) ->
-    App (expr_sub n es e1, expr_sub n es e2)
-  | TypAbs (_,e) ->
-    TypAbs ((), expr_sub n es e)
-  | TypApp (e,t) ->
-    TypApp (expr_sub n es e, t)
+let expr_sub (n: int) (es: b_expr)
+  : b_expr -> b_expr =
+  expr_scheme
+    ~tctx:0 ~ectx:n ~succ:(consume $ (+) 1)
+    ~f:(consume tvar)
+    ~g:(consume my_ignore)
+    ~h:(fun n m -> if n = m then shift_expr 0 0 0 n es else Var m)
+    ~i:(consume my_ignore)
 
 (** Substituting a [typ] into a [expr]. *)
-let rec typ_expr_sub (n: int) (ts: b_typ)
-  : b_expr -> b_expr = function
-  | Var m -> Var m
-  | Abs (_,t,e) ->
-    Abs ((), typ_sub n ts t, typ_expr_sub n ts e)
-  | App (e1,e2) ->
-    App (typ_expr_sub n ts e1, typ_expr_sub n ts e2)
-  | TypAbs (_,e) ->
-    TypAbs ((), typ_expr_sub (n + 1) ts e)
-  | TypApp (e,t) ->
-    TypApp (typ_expr_sub n ts e, typ_sub n ts t)
+let typ_expr_sub (n: int) (ts: b_typ)
+  : b_expr -> b_expr =
+  expr_scheme
+    ~tctx:n ~ectx:0 ~succ:(consume $ (+) 1)
+    ~f:(fun n m -> if n = m then shift_typ 0 n ts else TVar m)
+    ~g:(consume my_ignore)
+    ~h:(consume var)
+    ~i:(consume my_ignore)
 
 (** Top-level functions. *)
+
+let typ_sub_top (ts: b_typ) (t: b_typ) : b_typ =
+  shift_typ 0 (-1) $ typ_sub 0 (shift_typ 0 1 ts) t
+
+let expr_sub_top (es: b_expr) (e: b_expr) : b_expr =
+  shift_expr 0 (-1) 0 (-1) $ expr_sub 0 (shift_expr 0 1 0 1 es) e
+
+let typ_expr_sub_top (ts: b_typ) (e: b_expr) : b_expr =
+  shift_expr 0 (-1) 0 0 $ typ_expr_sub 0 (shift_typ 0 1 ts) e

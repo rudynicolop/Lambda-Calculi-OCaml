@@ -10,6 +10,10 @@ type ('a,'b) typ =
   | TForall of 'b * ('a,'b) typ
   | TArrow of ('a,'b) typ * ('a,'b) typ
 
+let tvar a = TVar a
+let tforall b t = TForall (b,t)
+let tarrow t1 t2 = TArrow (t1,t2)
+
 (** Terms. *)
 type ('a,'b) expr =
   | Var of 'a
@@ -18,71 +22,132 @@ type ('a,'b) expr =
   | TypAbs of 'b * ('a,'b) expr
   | TypApp of ('a,'b) expr * ('a,'b) typ
 
+let var a = Var a
+let abs b t e = Abs (b,t,e)
+let app e1 e2 = App (e1,e2)
+let typabs b e = TypAbs (b,e)
+let typapp e t = TypApp (e,t)
+
 let rec typ_fold
-    ~f:(f: 'a -> 'r)
-    ~g:(g: 'b -> 'r -> 'r)
+    ~ctx:(c: 'c)
+    ~succ:(succ: 'b -> 'c -> 'c)
+    ~f:(f: 'c -> 'a -> 'r)
+    ~g:(g: 'c -> 'b -> 'r -> 'r)
     ~h:(h: 'r -> 'r -> 'r) : ('a,'b) typ -> 'r = function
-  | TVar a -> f a
-  | TForall (b,t) -> g b (typ_fold ~f:f ~g:g ~h:h t)
+  | TVar a -> f c a
+  | TForall (b,t) ->
+    g c b (typ_fold ~ctx:(succ b c) ~succ:succ ~f:f ~g:g ~h:h t)
   | TArrow (t1,t2) ->
-    h (typ_fold ~f:f ~g:g ~h:h t1) (typ_fold ~f:f ~g:g ~h:h t2)
+    h (typ_fold ~ctx:c ~succ:succ ~f:f ~g:g ~h:h t1)
+      (typ_fold ~ctx:c ~succ:succ ~f:f ~g:g ~h:h t2)
 
 let rec expr_fold
-    ~f:(f: 'a -> 'r)
-    ~g:(g: 'b -> 'r -> 'r)
+    ~tctx:(tc: 'c)
+    ~ectx:(ec: 'c)
+    ~succ:(succ: 'b -> 'c -> 'c)
+    ~f:(f: 'c -> 'a -> 'r)
+    ~g:(g: 'c -> 'b -> 'r -> 'r)
     ~h:(h: 'r -> 'r -> 'r)
-    ~i:(i: 'a -> 's)
-    ~j:(j: 'b -> 'r -> 's -> 's)
+    ~i:(i: 'c -> 'a -> 's)
+    ~j:(j: 'c -> 'b -> 'r -> 's -> 's)
     ~k:(k: 's -> 's -> 's)
-    ~l:(l: 'b -> 's -> 's)
+    ~l:(l: 'c -> 'b -> 's -> 's)
     ~m:(m: 's -> 'r -> 's) : ('a,'b) expr -> 's = function
-  | Var a -> i a
+  | Var a -> i ec a
   | Abs (b,t,e) ->
-    j b (typ_fold ~f:f ~g:g ~h:h t)
-      (expr_fold ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e)
+    j ec b (typ_fold ~ctx:tc ~succ:succ ~f:f ~g:g ~h:h t)
+      (expr_fold ~tctx:tc ~ectx:(succ b ec) ~succ:succ
+         ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e)
   | App (e1,e2) ->
-    k (expr_fold ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e1)
-      (expr_fold ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e2)
+    k (expr_fold ~tctx:tc ~ectx:ec ~succ:succ
+         ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e1)
+      (expr_fold ~tctx:tc ~ectx:ec ~succ:succ
+         ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e2)
   | TypAbs (b,e) ->
-    l b (expr_fold ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e)
+    l tc b (expr_fold ~tctx:(succ b tc) ~ectx:ec ~succ:succ
+           ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e)
   | TypApp (e,t) ->
-    m (expr_fold ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e)
-      (typ_fold ~f:f ~g:g ~h:h t)
+    m (expr_fold ~tctx:tc ~ectx:ec ~succ:succ
+         ~f:f ~g:g ~h:h ~i:i ~j:j ~k:k ~l:l ~m:m e)
+      (typ_fold ~ctx:tc ~succ:succ ~f:f ~g:g ~h:h t)
 
-let typ_map ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd) : ('a,'b) typ -> ('c,'d) typ =
+let typ_scheme
+    ~ctx:(c: 'c) ~succ:(succ: 'b -> 'c -> 'c)
+    ~f:(f: 'c -> 'a -> ('d,'e) typ) ~g:(g: 'c -> 'b -> 'e)
+  : ('a,'b) typ -> ('d,'e) typ =
   typ_fold
-    ~f:(fun a -> TVar (f a))
-    ~g:(fun b t -> TForall (g b, t))
-    ~h:(fun t1 t2 -> TArrow (t1, t2))
+    ~ctx:c ~succ:succ
+    ~f:f ~g:(fun c b -> tforall $ g c b) ~h:tarrow
 
-let expr_map ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd) : ('a,'b) expr -> ('c,'d) expr =
+let typ_map_ctx
+    ~ctx:(c: 'c) ~succ:(succ: 'b -> 'c -> 'c)
+    ~f:(f: 'c -> 'a -> 'd) ~g:(g: 'c -> 'b -> 'e)
+  : ('a,'b) typ -> ('d,'e) typ =
+  typ_scheme
+    ~ctx:c ~succ:succ
+    ~f:(fun c a -> tvar $ f c a) ~g:g
+
+let typ_map
+    ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd)
+  : ('a,'b) typ -> ('c,'d) typ =
+  typ_map_ctx
+    ~ctx:() ~succ:(consume my_ignore)
+    ~f:(consume f) ~g:(consume g)
+
+let expr_scheme
+    ~tctx:(tc: 'c) ~ectx:(ec: 'c) ~succ:(succ: 'b -> 'c -> 'c)
+    ~f:(f: 'c -> 'a -> ('d,'e) typ) ~g:(g: 'c -> 'b -> 'e)
+    ~h:(h: 'c -> 'a -> ('d,'e) expr) ~i:(i: 'c -> 'b -> 'e)
+  : ('a,'b) expr -> ('d,'e) expr =
   expr_fold
-    ~f:(fun a -> TVar (f a))
-    ~g:(fun b e -> TForall (g b,e))
-    ~h:(fun t1 t2 -> TArrow (t1,t2))
-    ~i:(fun a -> Var (f a))
-    ~j:(fun b t e -> Abs (g b,t,e))
-    ~k:(fun e1 e2 -> App (e1,e2))
-    ~l:(fun b e -> TypAbs (g b, e))
-    ~m:(fun t e -> TypApp (t,e))
+    ~tctx:tc ~ectx:ec ~succ:succ
+    ~f:f
+    ~g:(fun c b -> tforall $ g c b)
+    ~h:tarrow
+    ~i:h
+    ~j:(fun c b -> abs $ i c b)
+    ~k:app
+    ~l:(fun c b -> typabs $ g c b)
+    ~m:typapp
+
+let expr_map_ctx
+    ~tctx:(tc: 'c) ~ectx:(ec: 'c) ~succ:(succ: 'b -> 'c -> 'c)
+    ~f:(f: 'c -> 'a -> 'd) ~g:(g: 'c -> 'b -> 'e)
+    ~h:(h: 'c -> 'a -> 'd) ~i:(i: 'c -> 'b -> 'e)
+  : ('a,'b) expr -> ('d,'e) expr =
+  expr_scheme
+    ~tctx:tc ~ectx:ec ~succ:succ
+    ~f:(fun c a -> tvar $ f c a) ~g:g
+    ~h:(fun c a -> var $ h c a) ~i:i
+
+let expr_map
+    ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd)
+    ~h:(h: 'a -> 'c) ~i:(i: 'b -> 'd)
+  : ('a,'b) expr -> ('a,'b) expr =
+  expr_map_ctx
+    ~tctx:() ~ectx:() ~succ:(consume my_ignore)
+    ~f:(consume f) ~g:(consume g)
+    ~h:(consume h) ~i:(consume i)
 
 let string_of_typ
     (f: 'a -> string) (g: 'b -> string) : ('a,'b) typ -> string =
   typ_fold
-    ~f:f
-    ~g:(fun b t -> "(∀" ^ g b ^ "." ^ t ^ ")")
+    ~ctx:() ~succ:(consume my_ignore)
+    ~f:(consume f)
+    ~g:(fun _ b t -> "(∀" ^ g b ^ "." ^ t ^ ")")
     ~h:(fun t1 t2 -> "(" ^ t1 ^ "→" ^ t2 ^ ")")
 
 let string_of_expr
     (f : 'a -> string) (g : 'b -> string) : ('a,'b) expr -> string =
   expr_fold
-    ~f:f
-    ~g:(fun b t -> "(∀" ^ g b ^ "." ^ t ^ ")")
+    ~tctx:() ~ectx:() ~succ:(consume my_ignore)
+    ~f:(consume f)
+    ~g:(fun _ b t -> "(∀" ^ g b ^ "." ^ t ^ ")")
     ~h:(fun t1 t2 -> "(" ^ t1 ^ "→" ^ t2 ^ ")")
-    ~i:f
-    ~j:(fun b t e -> "(λ" ^ g b ^ ":" ^ t ^ "." ^ e ^ ")")
+    ~i:(consume f)
+    ~j:(fun _ b t e -> "(λ" ^ g b ^ ":" ^ t ^ "." ^ e ^ ")")
     ~k:(fun e1 e2 -> "(" ^ e1 ^ " " ^ e2 ^ ")")
-    ~l:(fun b e -> "(" ^ "Λ" ^ g b ^ "." ^ e ^ ")")
+    ~l:(fun _ b e -> "(" ^ "Λ" ^ g b ^ "." ^ e ^ ")")
     ~m:(fun e t -> "(" ^ e ^ " [" ^ t ^ "])")
 
 (** Parsed syntax. *)
@@ -113,65 +178,45 @@ let rec (=?) (t1: b_typ) (t2: b_typ) : bool =
     t11 =? t21 && t12 =? t22
   | _, _ -> false
 
-let rec b_typ_of_p_typ
-    (stk: string list) : p_typ -> b_typ = function
-  | TVar x ->
-    TVar
-    begin match ListUtil.index_of String.equal x stk with
-      | Some n -> n
-      | None -> List.length stk + 1
-    end
-  | TForall (x,t) ->
-    TForall ((), b_typ_of_p_typ (x :: stk) t)
-  | TArrow (t1, t2) ->
-    TArrow (b_typ_of_p_typ stk t1, b_typ_of_p_typ stk t2)
+let b_typ_of_p_typ
+    (stk: string list) : p_typ -> b_typ =
+  typ_map_ctx
+    ~ctx:stk ~succ:List.cons
+    ~f:(fun stk x ->
+        match ListUtil.index_of String.equal x stk with
+        | Some n -> n
+        | None -> List.length stk + 1)
+    ~g:(consume my_ignore)
 
-let rec b_expr_of_p_expr
-    (tstk: string list)
-    (estk: string list) : p_expr -> b_expr = function
-  | Var x ->
-    Var
-    begin match ListUtil.index_of String.equal x estk with
-      | Some n -> n
-      | None -> List.length estk + 1
-    end
-  | Abs (x,t,e) ->
-    Abs ((), b_typ_of_p_typ tstk t,
-         b_expr_of_p_expr tstk (x :: estk) e)
-  | App (e1, e2) ->
-    App (b_expr_of_p_expr tstk estk e1,
-         b_expr_of_p_expr tstk estk e2)
-  | TypAbs (x,e) ->
-    TypAbs ((), b_expr_of_p_expr (x :: tstk) estk e)
-  | TypApp (e,t) ->
-    TypApp (b_expr_of_p_expr tstk estk e,
-            b_typ_of_p_typ tstk t)
+let b_expr_of_p_expr
+    (tstk: string list) (estk: string list)
+  : p_expr -> b_expr =
+  expr_map_ctx
+    ~tctx:tstk ~ectx:estk ~succ:List.cons
+    ~f:(fun stk x ->
+        match ListUtil.index_of String.equal x stk with
+        | Some n -> n
+        | None -> List.length stk + 1)
+    ~g:(consume my_ignore)
+    ~h:(fun estk x ->
+        match ListUtil.index_of String.equal x estk with
+        | Some n -> n
+        | None -> List.length estk + 1)
+    ~i:(consume my_ignore)
 
-let rec p_typ_of_b_typ
-    (depth: int) : b_typ -> p_typ = function
-  | TVar n ->
-    TVar ("T" ^ (string_of_int $ depth - n))
-  | TForall (_,t) ->
-    TForall ("T" ^ (string_of_int $ depth + 1),
-             p_typ_of_b_typ (depth + 1) t)
-  | TArrow (t1,t2) ->
-    TArrow (p_typ_of_b_typ depth t1,
-            p_typ_of_b_typ depth t2)
+let p_typ_of_b_typ
+    (depth: int) : b_typ -> p_typ =
+  typ_map_ctx
+    ~ctx:depth ~succ:(fun _ -> (+) 1)
+    ~f:(fun d n -> "T" ^ (string_of_int $ d - n))
+    ~g:(fun d _ -> "T" ^ (string_of_int $ d + 1))
 
-let rec p_expr_of_b_expr
-    (td: int) (ed: int) : b_expr -> p_expr = function
-  | Var n ->
-    Var ("x" ^ (string_of_int $ ed - n))
-  | Abs (_,t,e) ->
-    Abs ("x" ^ (string_of_int $ ed + 1),
-         p_typ_of_b_typ td t,
-         p_expr_of_b_expr td (ed + 1) e)
-  | App (e1,e2) ->
-    App (p_expr_of_b_expr td ed e1,
-         p_expr_of_b_expr td ed e2)
-  | TypAbs (_,e) ->
-    TypAbs ("T" ^ (string_of_int $ td + 1),
-            p_expr_of_b_expr (td + 1) ed e)
-  | TypApp (e,t) ->
-    TypApp (p_expr_of_b_expr td ed e,
-            p_typ_of_b_typ td t)
+let p_expr_of_b_expr
+    (td: int) (ed: int) : b_expr -> p_expr =
+  expr_map_ctx
+    ~tctx:td ~ectx:ed
+    ~succ:(fun _ -> (+) 1)
+    ~f:(fun d n -> "T" ^ (string_of_int $ d - n))
+    ~g:(fun d _ -> "T" ^ (string_of_int $ d + 1))
+    ~h:(fun ed n -> "x" ^ (string_of_int $ ed - n))
+    ~i:(fun ed _ -> "x" ^ (string_of_int $ ed + 1))
