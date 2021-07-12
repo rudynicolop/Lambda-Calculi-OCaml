@@ -1,5 +1,7 @@
 open Core
-open Ast    
+open Ast
+open Util
+open FunUtil
 
 (** Pipeline for lexing, parsing, running *)
 
@@ -15,23 +17,14 @@ let to_b_expr (e : p_expr) : b_expr = b_expr_of_p_expr [] e
 
 let to_h_expr (e : b_expr) : h_expr option = h_expr_of_b_expr [] e
 
-let rec multi_step
-    (red : 'a -> 'a option)
-    (f : 'a -> unit) (e : 'a) : 'a option =
-  let open Option in
-  f e; red e >>= multi_step red f
-
-let (>>) f g = fun x -> x |> g |> f
-
 let step_print_b_expr (s : b_expr -> b_expr option) (e : b_expr) : unit =
   e
   |>
-  multi_step s
+  multi_red s
     (print_endline
      >> (fun str -> str ^ " ->")
      >> string_of_p_expr
-     >> to_p_expr
-    )
+     >> to_p_expr)
   |> ignore
 
 let pipe_b_expr (s : b_expr -> b_expr option) (filename : string) : unit =
@@ -43,7 +36,7 @@ let pipe_b_expr (s : b_expr -> b_expr option) (filename : string) : unit =
 let step_print_h_expr (s : h_expr -> h_expr option) (e : h_expr) : unit =
   e
   |>
-  multi_step s
+  multi_red s
     (print_endline
      >> (fun str -> str ^ " ->")
      >> string_of_p_expr

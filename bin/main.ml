@@ -1,4 +1,6 @@
 open Core
+open Util
+open FunUtil
 
 (** Command flags. *)
 let cbv_flag = "-cbv"
@@ -15,8 +17,6 @@ let cbn_summary = "call by name"
 let appl_summary = "full applicative order"
 let normal_summary = "full normal order"
 let type_summary = "typing derivation"
-
-let my_ignore (_:'a) : unit = ()
 
 let command_template f msg =
   Command.basic ~summary:msg

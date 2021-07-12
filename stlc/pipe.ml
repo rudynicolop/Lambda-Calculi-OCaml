@@ -1,5 +1,7 @@
 open Core
 open Syntax
+open Util
+open FunUtil
 
 (** Pipeline for lexing, parsing, typing, & running *)
 
@@ -12,14 +14,6 @@ let parse (filename : string) : p_expr =
 let to_p_expr : b_expr -> p_expr = p_of_b_expr 0
 
 let to_b_expr : p_expr -> b_expr = b_of_p_expr []
-
-let rec multi_red
-    (red : 'a -> 'a option)
-    (f : 'a -> unit) (e : 'a) : 'a option =
-  let open Option in
-  f e; red e >>= multi_red red f
-
-let (>>) f g = fun x -> x |> g |> f
 
 let repl_b_expr (red : b_expr -> b_expr option) (e : b_expr) : unit =
   e

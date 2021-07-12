@@ -1,5 +1,5 @@
 open Core
-open Option
+open Util
 
 (** Simply-Typed Lambda Calculus Syntax *)
 
@@ -38,17 +38,10 @@ let rec (=?) (a : typ) (b : typ) : bool =
     a1 =? b1 && a2 =? b2
   | _, _ -> false
 
-(** Get index of (first occurence of) element in list *)
-let rec index_of (eqb : 'a -> 'a -> bool) (a : 'a)
-  : 'a list -> int option = function
-  | [] -> None
-  | h :: t ->
-    if eqb h a then Some 0 else index_of eqb a t >>| (+) 1
-
 (** Parsed to De Bruijn Syntax. *)
 let rec b_of_p_expr (stk : string list) : p_expr -> b_expr = function
   | Var x ->
-    begin match index_of String.equal x stk with
+    begin match ListUtil.index_of String.equal x stk with
       | None -> Var (List.length stk + 1)
       | Some n -> Var n
     end

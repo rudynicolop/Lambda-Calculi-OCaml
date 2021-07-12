@@ -4,4 +4,4 @@
 
 (library
 	(name vanilla)
-	(libraries core menhirLib))
+	(libraries core menhirLib util))

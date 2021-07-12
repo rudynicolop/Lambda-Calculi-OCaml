@@ -4,4 +4,4 @@
 
 (library
 	(name stlc)
-	(libraries core menhirLib))
+	(libraries core menhirLib util))

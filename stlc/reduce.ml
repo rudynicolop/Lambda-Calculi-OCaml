@@ -1,11 +1,10 @@
 open Core
 open Option
 open Syntax
+open Util
+open FunUtil
 
 (** Dynamic Semantics. *)
-
-(** Haskell-style dollar-sign *)
-let ($) f x = f x
 
 (** Shifts free variables above a cutoff [c] by [i] *)
 let rec shift (c : int) (i : int) : b_expr -> b_expr = function

@@ -1,5 +1,6 @@
 open Core
 open Option
+open Util
 
 (** Lambda Calculus Abstract Syntax Trees *)
 
@@ -23,18 +24,12 @@ type h_expr =
   | HApp of h_expr * h_expr
   | HPrintVar of string
 
-(** Get index of (first occurence of) element in list *)
-let rec index_of (eqb : 'a -> 'a -> bool) (a : 'a) (l : 'a list) : int option =
-  match l with
-  | [] -> None
-  | h :: t -> if eqb h a then Some 0 else index_of eqb a t >>| fun n -> n + 1
-
 (** Parsed syntax to De Bruijn Syntax
     [\x.\y.x -> \.\.1] *)
 let rec b_expr_of_p_expr (ctx : string list) (e : p_expr) : b_expr =
   match e with
   | Var x ->
-    begin match index_of String.equal x ctx with
+    begin match ListUtil.index_of String.equal x ctx with
       | None -> Var (List.length ctx + 1) (* free variable *)
       | Some n -> Var n (* bound variable *)
     end

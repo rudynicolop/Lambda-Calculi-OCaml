@@ -1,9 +1,8 @@
 open Ast
 open Core
 open Option
-
-(** Haskell-style dollar-sign *)
-let ($) f x = f x
+open Util
+open FunUtil
 
 (** Shifts free variables above a cutoff [c] by [i] *)
 let rec shift (c : int) (i : int) (e : b_expr) : b_expr =
