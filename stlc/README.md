@@ -10,7 +10,7 @@ Let the meta-variable `x` range over variable names,
 
 ```
 t ::= False | t1 -> t2
-e ::= x | fun x => e | e1 e2
+e ::= x | fun x:t => e | e1 e2
 ```
 
 ## Running a program
