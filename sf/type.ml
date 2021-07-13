@@ -29,7 +29,8 @@ let rec type_b_expr (td: int) (g : b_typ list)
     end
   | Abs (_,t,e) as abs ->
     if wf td t then
-      type_b_expr td (t :: g) e
+      let open Result in
+      type_b_expr td (t :: g) e >>| fun t' -> tarrow t t'
     else
       NotWellFounded (td,g,t,abs) |> Result.fail
   | App (e1,e2) ->
@@ -42,7 +43,7 @@ let rec type_b_expr (td: int) (g : b_typ list)
     end
   | TypAbs (_,e) ->
     let open Result in
-    type_b_expr (td + 1) g e >>| fun t -> TForall ((),t)
+    type_b_expr (td + 1) g e >>| fun t -> tforall () t
   | TypApp (e,t) as tapp ->
     let open Result in
     if wf td t then

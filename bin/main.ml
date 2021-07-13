@@ -56,7 +56,7 @@ module RunStlc = struct
     red |> run_b_expr |> command_template
   
   let type_b_expr_command =
-    my_ignore >> parse_and_type |> command_template
+    (my_ignore >> parse_and_type |> command_template) type_summary
 
   let command =
     Command.group
@@ -65,13 +65,27 @@ module RunStlc = struct
        cbn_flag, run_b_expr_command cbn cbn_summary;
        appl_flag, run_b_expr_command applicative appl_summary;
        normal_flag, run_b_expr_command normal normal_summary;
-       type_flag, type_b_expr_command type_summary]
+       type_flag, type_b_expr_command]
+end
+
+module RunSF = struct
+  open Sf
+  open Pipe
+
+  let type_b_expr_command =
+    (my_ignore >> parse_and_type |> command_template) type_summary
+
+  let command =
+    Command.group
+      ~summary:"Run a System-F program"
+      [type_flag, type_b_expr_command]
 end
 
 let command =
   Command.group
     ~summary:"Implementations of various lambda calculi"
     ["vanilla", RunVanilla.command;
-     "stlc", RunStlc.command]
+     "stlc", RunStlc.command;
+     "sf",RunSF.command]
 
 let () = Command.run ~version:"1.0" command

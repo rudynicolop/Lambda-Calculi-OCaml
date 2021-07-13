@@ -1,0 +1,1 @@
+Lam A. fun f:A -> A => fun a:A => f (f a)

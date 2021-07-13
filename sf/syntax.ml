@@ -178,7 +178,7 @@ let rec (=?) (t1: b_typ) (t2: b_typ) : bool =
     t11 =? t21 && t12 =? t22
   | _, _ -> false
 
-let b_typ_of_p_typ
+let b_of_p_typ
     (stk: string list) : p_typ -> b_typ =
   typ_map_ctx
     ~ctx:stk ~succ:List.cons
@@ -188,7 +188,7 @@ let b_typ_of_p_typ
         | None -> List.length stk + 1)
     ~g:(consume my_ignore)
 
-let b_expr_of_p_expr
+let b_of_p_expr
     (tstk: string list) (estk: string list)
   : p_expr -> b_expr =
   expr_map_ctx
@@ -204,14 +204,14 @@ let b_expr_of_p_expr
         | None -> List.length estk + 1)
     ~i:(consume my_ignore)
 
-let p_typ_of_b_typ
+let p_of_b_typ
     (depth: int) : b_typ -> p_typ =
   typ_map_ctx
     ~ctx:depth ~succ:(fun _ -> (+) 1)
     ~f:(fun d n -> "T" ^ (string_of_int $ d - n))
     ~g:(fun d _ -> "T" ^ (string_of_int $ d + 1))
 
-let p_expr_of_b_expr
+let p_of_b_expr
     (td: int) (ed: int) : b_expr -> p_expr =
   expr_map_ctx
     ~tctx:td ~ectx:ed
