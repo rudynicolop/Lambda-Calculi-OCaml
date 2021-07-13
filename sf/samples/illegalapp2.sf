@@ -1,0 +1,2 @@
+fun x: forall W, (W -> W) -> W =>
+fun k: forall G, G => x k

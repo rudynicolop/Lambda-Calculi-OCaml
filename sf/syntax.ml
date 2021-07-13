@@ -154,11 +154,9 @@ let string_of_expr
 type p_typ = (string,string) typ
 type p_expr = (string,string) expr
 
-let string_of_p_typ : p_typ -> string =
-  string_of_typ (fun s -> s) (fun s -> s)
+let string_of_p_typ : p_typ -> string = string_of_typ id id
 
-let string_of_p_expr : p_expr -> string =
-  string_of_expr (fun s -> s) (fun s -> s)
+let string_of_p_expr : p_expr -> string = string_of_expr id id
 
 (** De Bruijn syntax. *)
 type b_typ = (int,unit) typ

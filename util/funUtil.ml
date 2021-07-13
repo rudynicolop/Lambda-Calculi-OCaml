@@ -1,5 +1,8 @@
 open Core
 
+(** Identity function. *)
+let id (a: 'a) : 'a = a
+
 (** Function composition. *)
 let (>>) f g = fun x -> x |> g |> f
 

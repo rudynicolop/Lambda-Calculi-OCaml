@@ -1,0 +1,5 @@
+(Lam R. fun x: R => x)
+     [forall A, forall B, forall C,
+     	     (A -> B -> C) -> A -> B -> C]
+     (Lam W. Lam Z. Lam P.
+     	  fun j: W -> Z -> P => fun w: W => j w)

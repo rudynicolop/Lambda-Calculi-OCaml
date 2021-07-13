@@ -7,10 +7,10 @@ open FunUtil
 (** Static Semantics. *)
 
 (** Well-foundedness check. *)
-let rec wf (typ_depth: int) : b_typ -> bool = function
-  | TVar n -> n < typ_depth
-  | TForall (_,t) -> wf (typ_depth + 1) t
-  | TArrow (t1,t2) -> wf typ_depth t1 && wf typ_depth t2
+let wf (typ_depth: int) : b_typ -> bool =
+  typ_fold
+    ~ctx:typ_depth ~succ:(consume $ (+) 1)
+    ~f:(>) ~g:(consume $ consume id) ~h:(&&)
 
 type type_error =
   | UnboundVar of int * b_typ list * int

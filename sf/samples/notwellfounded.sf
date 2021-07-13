@@ -1,0 +1,2 @@
+(Lam R. fun x: R => x) [forall Q, Q -> Q]
+(Lam W. fun j: W -> W => j) [R]

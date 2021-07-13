@@ -1,0 +1,2 @@
+Lam R. fun f: (forall X, X) -> (forall H, H -> R) =>
+    fun g: forall U, U -> U => f g
