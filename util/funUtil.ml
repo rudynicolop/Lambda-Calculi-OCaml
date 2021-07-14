@@ -14,6 +14,10 @@ let my_ignore (_:'a) : unit = ()
 (** Consume unused argument. *)
 let consume (f: 'b -> 'c) : 'a -> 'b -> 'c = fun _ -> f
 
+(** Apply a function [n] times. *)
+let rec napply (n: int) (f: 'a -> 'a) (a: 'a) : 'a =
+  if n <= 0 then a else f $ napply (n-1) f a
+
 (** Multi-reduction. *)
 let rec multi_red
     (red : 'a -> 'a option)

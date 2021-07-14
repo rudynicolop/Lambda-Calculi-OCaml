@@ -75,6 +75,8 @@ let parse_and_type (filename : string) : b_expr option =
           |> to_b_expr in
   "Program parsed as " ^ (string_of_p_expr >> to_p_expr) e
   |> print_endline;
+  (*"De Bruin: " ^ string_of_b_expr e
+    |> print_endline;*)
   match Type.type_b_expr 0 [] e with
   | Result.Ok t ->
     let t' = t |> p_of_b_typ 0 |> string_of_p_typ in

@@ -48,12 +48,12 @@ let rec expr_fold
     ~f:(f: 'c -> 'a -> 'r)
     ~g:(g: 'c -> 'b -> 'r -> 'r)
     ~h:(h: 'r -> 'r -> 'r)
-    ~i:(i: 'c -> 'a -> 's)
+    ~i:(i: 'c -> 'c -> 'a -> 's)
     ~j:(j: 'c -> 'b -> 'r -> 's -> 's)
     ~k:(k: 's -> 's -> 's)
     ~l:(l: 'c -> 'b -> 's -> 's)
     ~m:(m: 's -> 'r -> 's) : ('a,'b) expr -> 's = function
-  | Var a -> i ec a
+  | Var a -> i tc ec a
   | Abs (b,t,e) ->
     j ec b (typ_fold ~ctx:tc ~succ:succ ~f:f ~g:g ~h:h t)
       (expr_fold ~tctx:tc ~ectx:(succ b ec) ~succ:succ
@@ -97,7 +97,7 @@ let typ_map
 let expr_scheme
     ~tctx:(tc: 'c) ~ectx:(ec: 'c) ~succ:(succ: 'b -> 'c -> 'c)
     ~f:(f: 'c -> 'a -> ('d,'e) typ) ~g:(g: 'c -> 'b -> 'e)
-    ~h:(h: 'c -> 'a -> ('d,'e) expr) ~i:(i: 'c -> 'b -> 'e)
+    ~h:(h: 'c -> 'c -> 'a -> ('d,'e) expr) ~i:(i: 'c -> 'b -> 'e)
   : ('a,'b) expr -> ('d,'e) expr =
   expr_fold
     ~tctx:tc ~ectx:ec ~succ:succ
@@ -113,12 +113,12 @@ let expr_scheme
 let expr_map_ctx
     ~tctx:(tc: 'c) ~ectx:(ec: 'c) ~succ:(succ: 'b -> 'c -> 'c)
     ~f:(f: 'c -> 'a -> 'd) ~g:(g: 'c -> 'b -> 'e)
-    ~h:(h: 'c -> 'a -> 'd) ~i:(i: 'c -> 'b -> 'e)
+    ~h:(h: 'c -> 'c -> 'a -> 'd) ~i:(i: 'c -> 'b -> 'e)
   : ('a,'b) expr -> ('d,'e) expr =
   expr_scheme
     ~tctx:tc ~ectx:ec ~succ:succ
     ~f:(fun c a -> tvar $ f c a) ~g:g
-    ~h:(fun c a -> var $ h c a) ~i:i
+    ~h:(fun tc ec a -> var $ h tc ec a) ~i:i
 
 let expr_map
     ~f:(f: 'a -> 'c) ~g:(g: 'b -> 'd)
@@ -127,7 +127,7 @@ let expr_map
   expr_map_ctx
     ~tctx:() ~ectx:() ~succ:(consume my_ignore)
     ~f:(consume f) ~g:(consume g)
-    ~h:(consume h) ~i:(consume i)
+    ~h:(consume $ consume h) ~i:(consume i)
 
 let string_of_typ
     (f: 'a -> string) (g: 'b -> string) : ('a,'b) typ -> string =
@@ -144,7 +144,7 @@ let string_of_expr
     ~f:(consume f)
     ~g:(fun _ b t -> "(∀" ^ g b ^ "." ^ t ^ ")")
     ~h:(fun t1 t2 -> "(" ^ t1 ^ "→" ^ t2 ^ ")")
-    ~i:(consume f)
+    ~i:(consume $ consume f)
     ~j:(fun _ b t e -> "(λ" ^ g b ^ ":" ^ t ^ "." ^ e ^ ")")
     ~k:(fun e1 e2 -> "(" ^ e1 ^ " " ^ e2 ^ ")")
     ~l:(fun _ b e -> "(" ^ "Λ" ^ g b ^ "." ^ e ^ ")")
@@ -162,10 +162,10 @@ let string_of_p_expr : p_expr -> string = string_of_expr id id
 type b_typ = (int,unit) typ
 type b_expr = (int,unit) expr
 
-let string_b_typ : b_typ -> string =
+let string_of_b_typ : b_typ -> string =
   string_of_typ string_of_int (fun _ -> "")
 
-let string_b_expr : b_expr -> string =
+let string_of_b_expr : b_expr -> string =
   string_of_expr string_of_int (fun _ -> "")
 
 let rec (=?) (t1: b_typ) (t2: b_typ) : bool =
@@ -196,7 +196,7 @@ let b_of_p_expr
         | Some n -> n
         | None -> List.length stk + 1)
     ~g:(consume my_ignore)
-    ~h:(fun estk x ->
+    ~h:(fun _ estk x ->
         match ListUtil.index_of String.equal x estk with
         | Some n -> n
         | None -> List.length estk + 1)
@@ -216,5 +216,5 @@ let p_of_b_expr
     ~succ:(fun _ -> (+) 1)
     ~f:(fun d n -> "T" ^ (string_of_int $ d - n))
     ~g:(fun d _ -> "T" ^ (string_of_int $ d + 1))
-    ~h:(fun ed n -> "x" ^ (string_of_int $ ed - n))
+    ~h:(fun _ ed n -> "x" ^ (string_of_int $ ed - n))
     ~i:(fun ed _ -> "x" ^ (string_of_int $ ed + 1))

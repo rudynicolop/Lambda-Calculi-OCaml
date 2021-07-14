@@ -1,0 +1,4 @@
+Lam A. fun h:A => fun a:A =>
+(fun h:A => fun t:forall R, (A -> R -> R) -> R -> R =>
+     (Lam K. fun f: A -> K -> K => fun n:K => f h (t [K] f n)))
+     h (Lam L. fun f:A -> L -> L => fun n:L => f a n)

@@ -25,25 +25,31 @@ let rec type_b_expr (td: int) (g : b_typ list)
   | Var n ->
     begin match List.nth g n with
       | Some t -> Result.return t
-      | None -> UnboundVar (td,g,n) |> Result.fail
+      | None ->
+        UnboundVar (td,g,n) |> Result.fail
     end
   | Abs (_,t,e) as abs ->
     if wf td t then
       let open Result in
-      type_b_expr td (t :: g) e >>| fun t' -> tarrow t t'
+      type_b_expr td (t :: g) e >>| tarrow t
     else
       NotWellFounded (td,g,t,abs) |> Result.fail
   | App (e1,e2) ->
     let open Result in
     type_b_expr td g e2 >>= fun t2 ->
-    type_b_expr td g e1 >>= begin function
-    | TArrow (t,t') when t =? t2 -> return t'
-    | TArrow (t,_) -> TypMismatch (td,g,t,t2,e1,e2) |> fail
-    | t1 -> IllegalApp (td,g,t1,e1,e2) |> fail
+    type_b_expr td g e1 >>=
+    begin function
+      | TArrow (t,t') when t =? t2 -> return t'
+      | TArrow (t,_) ->
+        TypMismatch (td,g,t,t2,e1,e2) |> fail
+      | t1 -> IllegalApp (td,g,t1,e1,e2) |> fail
     end
   | TypAbs (_,e) ->
     let open Result in
-    type_b_expr (td + 1) g e >>| fun t -> tforall () t
+    type_b_expr
+      (td + 1)
+      (List.map ~f:(shift_typ 0 1) g)
+      e >>| tforall ()
   | TypApp (e,t) as tapp ->
     let open Result in
     if wf td t then

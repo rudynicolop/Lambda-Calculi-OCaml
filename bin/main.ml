@@ -70,15 +70,23 @@ end
 
 module RunSF = struct
   open Sf
+  open Reduce
   open Pipe
 
   let type_b_expr_command =
     (my_ignore >> parse_and_type |> command_template) type_summary
 
+  let run_b_expr_command red =
+    red |> run_b_expr |> command_template
+  
   let command =
     Command.group
       ~summary:"Run a System-F program"
-      [type_flag, type_b_expr_command]
+      [type_flag, type_b_expr_command;
+       cbv_flag, run_b_expr_command cbv cbv_summary;
+       cbn_flag, run_b_expr_command cbn cbn_summary;
+       appl_flag, run_b_expr_command appl appl_summary;
+       normal_flag, run_b_expr_command normal normal_summary]
 end
 
 let command =
