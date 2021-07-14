@@ -1,4 +1,4 @@
-# System-F
+# (λ2) System-F
 
 Lambda calculus with parametric polymorphism.
 
