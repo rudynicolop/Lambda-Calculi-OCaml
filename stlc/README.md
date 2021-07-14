@@ -1,4 +1,4 @@
-# The Simply-Typed Lambda Calculus
+# (λ→) The Simply-Typed Lambda Calculus
 
 Lambda calculus with simple types.
 
