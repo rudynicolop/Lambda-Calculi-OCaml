@@ -3,6 +3,7 @@ open Util
 open FunUtil
 open Syntax
 open Kinding
+open TypeReduce
 
 (** Typing errors. *)
 type type_error =
@@ -31,7 +32,8 @@ let rec typing (g: b_typ list)
     typing g e2 >>= fun t2 ->
     typing g e1 >>=
     begin function
-      | TArrow (t,t') when t == t2 -> return t' (* TODO: must evaluate types! *)
+      | TArrow (t,t')
+        when normalize t == normalize t2 -> return t'
       | TArrow (t,_) -> fail $ TypMismatch (g,t,t2,e1,e2)
       | t1 -> fail $ IllegalApp (g,t1,e1,e2)
     end

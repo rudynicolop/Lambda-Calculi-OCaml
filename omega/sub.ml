@@ -37,3 +37,11 @@ let sub_term
     ~ctx:n ~succ:(consume $ (+) 1)
     ~var:(fun n m -> if n = m then es else var m)
     ~ty:id ~abs:(consume my_ignore)
+
+(** Top-level functions. *)
+
+let sub_typ_top (ts: b_typ) (t: b_typ) : b_typ =
+  shift_typ 0 1 $ sub_typ 0 (shift_typ 0 (-1) ts) t
+
+let sub_term_top (ts: b_term) (t: b_term) : b_term =
+  shift_term 0 1 $ sub_term 0 (shift_term 0 (-1) ts) t
