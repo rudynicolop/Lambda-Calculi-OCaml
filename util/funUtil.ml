@@ -12,7 +12,7 @@ let ($) f x = f x
 let my_ignore (_:'a) : unit = ()
 
 (** Consume unused argument. *)
-let consume (f: 'b -> 'c) : 'a -> 'b -> 'c = fun _ -> f
+let consume (f: 'b) : 'a -> 'b = fun _ -> f
 
 (** Apply a function [n] times. *)
 let rec napply (n: int) (f: 'a -> 'a) (a: 'a) : 'a =
