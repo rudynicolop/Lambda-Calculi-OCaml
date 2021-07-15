@@ -31,3 +31,5 @@ let rec refl_trans_clos
   f t; match red t with
   | Some t -> refl_trans_clos red f t
   | None -> t
+
+let switch (f: 'a -> 'b -> 'c) (b: 'b) (a: 'a) : 'c = f a b

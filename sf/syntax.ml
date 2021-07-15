@@ -205,7 +205,7 @@ let b_of_p_expr
 let p_of_b_typ
     (depth: int) : b_typ -> p_typ =
   typ_map_ctx
-    ~ctx:depth ~succ:(fun _ -> (+) 1)
+    ~ctx:depth ~succ:(consume $ (+) 1)
     ~f:(fun d n -> "T" ^ (string_of_int $ d - n))
     ~g:(fun d _ -> "T" ^ (string_of_int $ d + 1))
 
@@ -213,7 +213,7 @@ let p_of_b_expr
     (td: int) (ed: int) : b_expr -> p_expr =
   expr_map_ctx
     ~tctx:td ~ectx:ed
-    ~succ:(fun _ -> (+) 1)
+    ~succ:(consume $ (+) 1)
     ~f:(fun d n -> "T" ^ (string_of_int $ d - n))
     ~g:(fun d _ -> "T" ^ (string_of_int $ d + 1))
     ~h:(fun _ ed n -> "x" ^ (string_of_int $ ed - n))

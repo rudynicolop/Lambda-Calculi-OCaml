@@ -1,4 +1,4 @@
-# (λω)
+# λω
 
 The simply-typed lambda-calculus extended with type operators/constructors.
 

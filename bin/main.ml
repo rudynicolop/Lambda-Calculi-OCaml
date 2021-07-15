@@ -89,11 +89,32 @@ module RunSF = struct
        normal_flag, run_b_expr_command normal normal_summary]
 end
 
+module RunOmega = struct
+  open Omega
+  open Pipe
+
+  let type_b_term_command =
+    (my_ignore >> parse_and_type |> command_template) type_summary
+
+  let run_b_term_command red =
+    red |> run_b_term |> command_template
+  
+  let command =
+    Command.group
+      ~summary:"Run an omega program"
+      [type_flag, type_b_term_command;
+       (*cbv_flag, run_b_expr_command cbv cbv_summary;
+       cbn_flag, run_b_expr_command cbn cbn_summary;
+       appl_flag, run_b_expr_command appl appl_summary;
+         normal_flag, run_b_expr_command normal normal_summary*)]
+end
+
 let command =
   Command.group
     ~summary:"Implementations of various lambda calculi"
     ["vanilla", RunVanilla.command;
      "stlc", RunStlc.command;
-     "sf",RunSF.command]
+     "sf",RunSF.command;
+     "omega",RunOmega.command]
 
 let () = Command.run ~version:"1.0" command

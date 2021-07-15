@@ -127,6 +127,34 @@ let map_term
     ~ctx:() ~succ:(consume my_ignore)
     ~ty:ty ~var:(consume v) ~abs:(consume ab)
 
+(** Conversion between parsed & de Bruijn syntax. *)
+
+let b_of_p_typ (stk: string list) : p_typ -> b_typ =
+  map_typ_ctx
+    ~ctx:stk ~succ:List.cons
+    ~var:(switch $ ListUtil.index_of_default String.equal)
+    ~abs:(consume my_ignore)
+
+let b_of_p_term (stk: string list) : p_term -> b_term =
+  map_term_ctx
+    ~ctx:stk ~succ:List.cons
+    ~ty:(b_of_p_typ [])
+    ~var:(switch $ ListUtil.index_of_default String.equal)
+    ~abs:(consume my_ignore)
+
+let p_of_b_typ (d: int) : b_typ -> p_typ =
+  map_typ_ctx
+    ~ctx:d ~succ:(consume $ (+) 1)
+    ~var:(fun d n -> "T" ^ (string_of_int $ d - n))
+    ~abs:(fun d _ -> "T" ^ (string_of_int $ d + 1))
+
+let p_of_b_term (d: int) : b_term -> p_term =
+  map_term_ctx
+    ~ctx:d ~succ:(consume $ (+) 1)
+    ~ty:(p_of_b_typ 0)
+    ~var:(fun d n -> "x" ^ (string_of_int $ d - n))
+    ~abs:(fun d _ -> "x" ^ (string_of_int $ d + 1))
+
 (** String of kinds, types, & terms. *)
 
 let string_of_kind : kind -> string =
@@ -153,3 +181,13 @@ let string_of_term
     ~abs:(fun _ b t e ->
         "(λ" ^ fb b ^ ":" ^ string_of_typ fa fb t ^ "." ^ e ^ ")")
     ~app:(fun e1 e2 -> "(" ^ e1 ^ " " ^ e2 ^ ")")
+
+let string_of_p_typ : p_typ -> string = string_of_typ id id
+
+let string_of_b_typ : b_typ -> string =
+  string_of_typ string_of_int (fun _ -> "")
+
+let string_of_p_term : p_term -> string = string_of_term id id
+
+let string_of_b_term : b_term -> string =
+  string_of_term string_of_int (fun _ -> "")
