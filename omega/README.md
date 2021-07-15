@@ -7,7 +7,7 @@ The simply-typed lambda-calculus extended with type operators/constructors.
 Let the meta variable
 `T` range over type variables,
 `x` range over term variables,
-'k' range over kinds,
+`k` range over kinds,
 `t` range over types,
 & `e` range over terms.
 ```
