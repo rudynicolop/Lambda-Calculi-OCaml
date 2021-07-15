@@ -24,3 +24,10 @@ let rec multi_red
     (f : 'a -> unit) (e : 'a) : 'a option =
   let open Option in
   f e; red e >>= multi_red red f
+
+let rec refl_trans_clos
+    (red: 'a -> 'a option)
+    (f: 'a -> unit) (t: 'a) : 'a =
+  f t; match red t with
+  | Some t -> refl_trans_clos red f t
+  | None -> t
