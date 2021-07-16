@@ -17,7 +17,8 @@ e ::= x | fun x:t => e | e1 e2
 
 λ→ only features terms parameterized by terms:
 ```
-fun x:t => e
+fun x:t => e (* term-binding term *)
+e1 e2 (* term binding a term *)
 ```
 λ→ rests at the bottom of the lambda cube.
 
