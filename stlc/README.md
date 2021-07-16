@@ -13,6 +13,14 @@ t ::= False | t1 -> t2
 e ::= x | fun x:t => e | e1 e2
 ```
 
+### Lambda Cube
+
+λ→ only features terms parameterized by terms:
+```
+fun x:t => e
+```
+λ→ rests at the bottom of the lambda cube.
+
 ## Running a program
 
 The command line template to run some program is:
