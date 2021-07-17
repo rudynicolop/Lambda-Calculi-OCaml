@@ -1,0 +1,1 @@
+fun k:Bot => fun l:Bot => y

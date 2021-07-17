@@ -36,5 +36,5 @@ let rec kinding (g: kind list)
     begin match k1,k2 with
       | KStar, KStar -> return KStar
       | KStar, _ -> fail $ BadArrowKind (g,k2,t,t2)
-      | _, _ -> fail $ BadArrowKind (g,k2,t,t1)
+      | _, _ -> fail $ BadArrowKind (g,k1,t,t1)
     end

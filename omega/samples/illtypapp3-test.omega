@@ -1,0 +1,1 @@
+fun g: (Fun Z:: *. Z -> Z) Bot => g

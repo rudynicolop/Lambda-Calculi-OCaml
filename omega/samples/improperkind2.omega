@@ -1,0 +1,6 @@
+fun q:
+    (Fun U::* --> * --> *.
+    	 Fun G::* --> *.
+	 Fun H:: *. U (G H) (G H))
+	 (Fun E::*. Fun P::*. Bot)
+	 (Fun W::*. W) => q

@@ -1,0 +1,1 @@
+fun q: (Fun K::*. K -> K) (Fun J::* --> *. J) => q

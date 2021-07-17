@@ -1,0 +1,1 @@
+fun x: (Fun A::*. B) Bot => x

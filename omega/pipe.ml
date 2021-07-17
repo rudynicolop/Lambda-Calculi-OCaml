@@ -26,10 +26,44 @@ let repl_b_term (red : b_term -> b_term option) (e : b_term) : unit =
     end
   |> ignore
 
+let string_of_kind_error
+  : Kinding.kind_error -> string = function
+  | Kinding.UnboundTypVar (g, n) ->
+    n
+    |> tvar
+    |> p_of_b_typ (List.length g)
+    |> string_of_p_typ
+    |> (^) "Unbound type variable "
+  | Kinding.IllegalTypApp (g,k,t1,t2) ->
+    let d = List.length g in
+    let t1' = p_of_b_typ d t1 in
+    let t2' = p_of_b_typ d t2 in
+    "In type application " ^ (string_of_p_typ $ tapp t1' t2') ^
+    ", type " ^ string_of_p_typ t1' ^
+    " is expected to have an arrow kind, but has kind " ^
+    string_of_kind k
+  | Kinding.KindMismatch (g,k1,k2,t1,t2) ->
+    let d = List.length g in
+    let t1' = p_of_b_typ d t1 in
+    let t2' = p_of_b_typ d t2 in
+    "In type application " ^ (string_of_p_typ $ tapp t1' t2') ^
+    ", argument " ^ string_of_p_typ t2' ^
+    " is expected to have kind " ^ string_of_kind k1 ^
+    ", but has kind " ^ string_of_kind k2
+  | Kinding.BadArrowKind (g,k,ta,t) ->
+    let d = List.length g in
+    let ta' = p_of_b_typ d ta in
+    let t' = p_of_b_typ d t in
+    "In arrow-type " ^ string_of_p_typ ta' ^
+    ", type " ^ string_of_p_typ t' ^
+    " is expected to have kind " ^ string_of_kind KStar ^
+    ", but has kind " ^ string_of_kind k
+
 let string_of_type_error
   : Typing.type_error -> string = function
   | Typing.UnboundVar (g,n) ->
-    Var n
+    n
+    |> var
     |> p_of_b_term (List.length g)
     |> string_of_p_term
     |> (^) "Unbound variable "
@@ -52,7 +86,15 @@ let string_of_type_error
     ", argument " ^ string_of_p_term e2' ^
     " is expected to have type " ^ string_of_p_typ t' ^
     ", but has type " ^ string_of_p_typ t2'
-  | _ -> failwith "TODO: [string_of_type_error] cases."
+  | Typing.ImproperKind (g,k,t,e) ->
+    let d = List.length g in
+    let t' = p_of_b_typ 0 t in
+    let e' = p_of_b_term d e in
+    "In term " ^ string_of_p_term e' ^
+    ", type " ^ string_of_p_typ t' ^
+    " is expected to have kind " ^ string_of_kind KStar ^
+    ", but has kind " ^ string_of_kind k
+  | Typing.KindingError err -> string_of_kind_error err
     
 let parse_and_type (filename : string) : b_term option =
   let e = filename
@@ -64,9 +106,12 @@ let parse_and_type (filename : string) : b_term option =
     |> print_endline;*)
   match Typing.typing [] e with
   | Result.Ok t ->
-    let t' = t |> p_of_b_typ 0 |> string_of_p_typ in
-    "Program has type " ^ t' |> print_endline;
-    Some e
+    t
+    |> TypeReduce.normalize
+    |> p_of_b_typ 0
+    |> string_of_p_typ
+    |> (^) "Program has type "
+    |> print_endline; Some e
   | Result.Error err ->
     string_of_type_error err |> print_endline; None
 

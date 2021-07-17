@@ -26,3 +26,15 @@ e1 e2 (* term binding a term *)
 Fun T::k. t (* type-binding type *)
 t1 t2 (* type binding a type *)
 ```
+
+## Running a program
+
+The command line template to run some program is:
+```
+dune exec ./bin/main.exe omega -- <SEMANTICS> <FILENAME>
+```
+
+For example, to type `omega/samples/id.sf`, enter:
+```
+dune exec ./bin/main.exe omega -- -type omega/samples/id.omega
+```

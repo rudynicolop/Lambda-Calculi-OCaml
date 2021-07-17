@@ -30,7 +30,7 @@ prog:
   | e=pabs EOF { e } ;
 
 pabs:
-  | FUN x=VAR COLON t=ptarrow MAPSTO e=pabs { abs x t e }
+  | FUN x=VAR COLON t=ptabs MAPSTO e=pabs { abs x t e }
   | e=papp { e } ;
 
 papp:
@@ -41,12 +41,12 @@ pvar:
   | x=VAR { var x }
   | LPAREN e=pabs RPAREN { e } ;
 
-ptarrow:
-  | t1=ptabs TARROW t2=ptarrow { tarrow t1 t2 }
-  | t=ptabs { t } ;
-
 ptabs:
   | TFUN x=VAR DOUBLECOLON k=pkarrow DOT t=ptabs { tabs x k t }
+  | t=ptarrow { t } ;
+
+ptarrow:
+  | t1=ptapp TARROW t2=ptarrow { tarrow t1 t2 }
   | t=ptapp { t } ;
 
 ptapp:
@@ -59,7 +59,7 @@ ptbot:
 
 ptvar:
   | x=VAR { tvar x }
-  | LPAREN t=ptarrow RPAREN { t } ;
+  | LPAREN t=ptabs RPAREN { t } ;
 
 pkarrow:
   | k1=pkstar KARROW k2=pkarrow { karrow k1 k2 }

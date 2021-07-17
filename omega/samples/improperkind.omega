@@ -1,0 +1,1 @@
+fun x: Fun L::*. L => x

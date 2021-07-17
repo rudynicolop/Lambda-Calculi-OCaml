@@ -1,0 +1,3 @@
+fun l:
+    (Fun O::* --> *. O Bot -> O Bot) (Bot -> Bot)
+    => l

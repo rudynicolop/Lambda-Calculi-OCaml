@@ -5,7 +5,10 @@ open Util
 (** Lambda Calculus Abstract Syntax Trees *)
 
 (** Syntax template. *)
-type ('a,'b) expr = Var of 'a | Lam of 'b * ('a,'b) expr | App of ('a,'b) expr * ('a,'b) expr
+type ('a,'b) expr =
+  | Var of 'a
+  | Lam of 'b * ('a,'b) expr
+  | App of ('a,'b) expr * ('a,'b) expr
 
 (** Parsed Syntax. *)
 type p_expr = (string,string) expr
@@ -28,11 +31,7 @@ type h_expr =
     [\x.\y.x -> \.\.1] *)
 let rec b_expr_of_p_expr (ctx : string list) (e : p_expr) : b_expr =
   match e with
-  | Var x ->
-    begin match ListUtil.index_of String.equal x ctx with
-      | None -> Var (List.length ctx + 1) (* free variable *)
-      | Some n -> Var n (* bound variable *)
-    end
+  | Var x -> Var (ListUtil.index_of_default String.(=) x ctx)
   | Lam (x,e) -> Lam ((), b_expr_of_p_expr (x :: ctx) e)
   | App (e1,e2) -> App (b_expr_of_p_expr ctx e1, b_expr_of_p_expr ctx e2)
 

@@ -180,10 +180,7 @@ let b_of_p_typ
     (stk: string list) : p_typ -> b_typ =
   typ_map_ctx
     ~ctx:stk ~succ:List.cons
-    ~f:(fun stk x ->
-        match ListUtil.index_of String.equal x stk with
-        | Some n -> n
-        | None -> List.length stk + 1)
+    ~f:(fun c x -> ListUtil.index_of_default String.(=) x c)
     ~g:(consume my_ignore)
 
 let b_of_p_expr
@@ -191,15 +188,9 @@ let b_of_p_expr
   : p_expr -> b_expr =
   expr_map_ctx
     ~tctx:tstk ~ectx:estk ~succ:List.cons
-    ~f:(fun stk x ->
-        match ListUtil.index_of String.equal x stk with
-        | Some n -> n
-        | None -> List.length stk + 1)
+    ~f:(fun c x -> ListUtil.index_of_default String.(=) x c)
     ~g:(consume my_ignore)
-    ~h:(fun _ estk x ->
-        match ListUtil.index_of String.equal x estk with
-        | Some n -> n
-        | None -> List.length estk + 1)
+    ~h:(fun _ c x -> ListUtil.index_of_default String.(=) x c)
     ~i:(consume my_ignore)
 
 let p_of_b_typ
