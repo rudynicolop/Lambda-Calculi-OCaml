@@ -1,0 +1,11 @@
+(fun x: (Fun J::(* --> *) --> *. Fun W::* --> *. J W -> J W -> J W)
+       (Fun H::* --> *. H Bot -> H Bot)
+       (Fun U::*. Bot -> U -> U) =>
+       fun y: (Fun K::*. K -> K) ((Fun X::*. X -> X -> X) Bot) => x y y)
+
+(fun s: (Fun X::*. X -> X) (Bot -> Bot -> Bot) =>
+     fun j: (Bot -> Bot -> Bot) -> Bot -> Bot -> Bot => s)
+
+(fun d: Bot -> Bot -> Bot => fun j:Bot => fun k:Bot => j)
+
+(fun x: (Fun J::*. J) Bot => fun p:Bot => p)

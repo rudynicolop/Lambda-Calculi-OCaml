@@ -27,7 +27,7 @@ let beta_reduce (e1 : b_expr) (e2 : b_expr) : b_expr =
 
 (** Call-by-value *)
 let rec cbv : b_expr -> b_expr option = function
-  | App (Abs (_,_,e1), (Abs (_,_,_) | Var _ as e2)) ->
+  | App (Abs (_,_,e1), (Abs _ | Var _ as e2)) ->
     some $ beta_reduce e1 e2
   | App (e1, e2) ->
     begin match cbv e1 with

@@ -91,6 +91,7 @@ end
 
 module RunOmega = struct
   open Omega
+  open Reduce
   open Pipe
 
   let type_b_term_command =
@@ -103,10 +104,10 @@ module RunOmega = struct
     Command.group
       ~summary:"Run an omega program"
       [type_flag, type_b_term_command;
-       (*cbv_flag, run_b_expr_command cbv cbv_summary;
-       cbn_flag, run_b_expr_command cbn cbn_summary;
-       appl_flag, run_b_expr_command appl appl_summary;
-         normal_flag, run_b_expr_command normal normal_summary*)]
+       cbv_flag, run_b_term_command cbv cbv_summary;
+       cbn_flag, run_b_term_command cbn cbn_summary;
+       appl_flag, run_b_term_command appl appl_summary;
+       normal_flag, run_b_term_command normal normal_summary]
 end
 
 let command =

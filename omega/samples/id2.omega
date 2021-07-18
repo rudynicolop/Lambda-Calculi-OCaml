@@ -1,0 +1,1 @@
+fun x: (Fun U::* --> *. U Bot -> U Bot) (Fun W::*. W) => x
