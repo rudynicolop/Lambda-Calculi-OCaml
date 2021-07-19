@@ -1,0 +1,3 @@
+(library
+	(name fomega)
+	(libraries core menhirLib util))
