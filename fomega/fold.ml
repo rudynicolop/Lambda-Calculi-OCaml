@@ -1,3 +1,4 @@
+open Core
 open Util
 open FunUtil
 open Syntax
@@ -6,11 +7,11 @@ open Syntax
 
 let rec fold_kind
     ~star:(s: 'm)
-    ~arrow:(f: 'm -> 'm -> 'm)
-  : kind -> 'a = function
+    ~arr:(f: 'm -> 'm -> 'm)
+  : kind -> 'm = function
   | KStar -> s
   | KArrow (k1,k2) ->
-    f (fold_kind ~star:s ~arrow:f k1) $ fold_kind ~star:s ~arrow:f k2
+    f (fold_kind ~star:s ~arr:f k1) $ fold_kind ~star:s ~arr:f k2
 
 let rec fold_typ
     ~ctx:(o: 'o) ~f:(f: 'b -> 'o -> 'o)
@@ -105,3 +106,74 @@ let map_term_ctx
   term_scheme
     ~tctx:tyo ~ctx:o ~f:f ~ty:ty ~abs:ab ~tabs:tab
     ~var:(fun o -> var >> v o)
+
+(** Conversion between representations. *)
+
+let b_of_p_typ (o: string list) : p_typ -> b_typ =
+  map_typ_ctx
+    ~ctx:o ~f:List.cons
+    ~var:(switch $ ListUtil.index_of_default String.(=))
+    ~all:(consume my_ignore) ~abs:(consume my_ignore)
+
+let b_of_p_term (tyo: string list) (o: string list) : p_term -> b_term =
+  map_term_ctx
+    ~tctx:tyo ~ctx:o ~f:List.cons ~ty:b_of_p_typ
+    ~var:(switch $ ListUtil.index_of_default String.(=))
+    ~abs:(consume my_ignore) ~tabs:(consume my_ignore)
+
+let p_of_b_typ (d: int) : b_typ -> p_typ =
+  map_typ_ctx
+    ~ctx:d ~f:(consume $ (+) 1)
+    ~var:(fun d n -> "T" ^ (string_of_int $ d - n))
+    ~all:(fun d _ -> "T" ^ (string_of_int $ d + 1))
+    ~abs:(fun d _ -> "T" ^ (string_of_int $ d + 1))
+
+let p_of_term (td: int) (d: int) : b_term -> p_term =
+  map_term_ctx
+    ~tctx:td ~ctx:d ~f:(consume $ (+) 1) ~ty:p_of_b_typ
+    ~var:(fun d n -> "T" ^ (string_of_int $ d - n))
+    ~abs:(fun d _ -> "T" ^ (string_of_int $ d + 1))
+    ~tabs:(fun d _ -> "T" ^ (string_of_int $ d + 1))
+
+(** [string_of] functions. *)
+
+let string_of_kind : kind -> string =
+  fold_kind ~star:"*"
+    ~arr:(fun k1 k2 -> "(" ^ k1 ^ "⇒" ^ k2 ^ ")")
+
+let string_of_typ
+  (fa: 'a -> string) (fb: 'b -> string)
+  : ('a,'b) typ -> string =
+  fold_typ
+    ~ctx:() ~f:(consume my_ignore) ~var:(consume fa)
+    ~arr:(fun t1 t2 -> "(" ^ t1 ^ "→" ^ t2 ^ ")")
+    ~app:(fun t1 t2 -> "(" ^ t1 ^ " " ^ t2 ^ ")")
+    ~all:(fun _ b k t ->
+        "(∀" ^ fb b ^ "::" ^ string_of_kind k ^ "." ^ t ^ ")")
+    ~abs:(fun _ b k t ->
+        "(λ" ^ fb b ^ "::" ^ string_of_kind k ^ "." ^ t ^ ")")
+
+let string_of_term
+    (fa: 'a -> string) (fb: 'b -> string)
+  : ('a,'b) term -> string =
+  fold_term
+    ~tctx:() ~ctx:() ~f:(consume my_ignore)
+    ~var:(consume fa)
+    ~abs:(fun _ b t e ->
+        "(λ" ^ fb b ^ ":" ^ string_of_typ fa fb t ^ "." ^ e ^ ")")
+    ~app:(fun t1 t2 -> "(" ^ t1 ^ " " ^ t2 ^ ")")
+    ~tabs:(fun _ b k e ->
+        "(Λ" ^ fb b ^ "::" ^ string_of_kind k ^ "." ^ e ^ ")")
+    ~tapp:(fun e t -> "(" ^ e ^ " [" ^ string_of_typ fa fb t ^ "])")
+
+let string_of_p_typ : p_typ -> string =
+  string_of_typ id id
+    
+let string_of_p_term : p_term -> string =
+  string_of_term id id
+
+let string_of_b_typ : b_typ -> string =
+  string_of_typ string_of_int $ consume ""
+
+let string_of_b_term : b_term -> string =
+  string_of_term string_of_int $ consume ""

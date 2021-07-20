@@ -147,7 +147,7 @@ let string_of_expr
     ~i:(consume $ consume f)
     ~j:(fun _ b t e -> "(λ" ^ g b ^ ":" ^ t ^ "." ^ e ^ ")")
     ~k:(fun e1 e2 -> "(" ^ e1 ^ " " ^ e2 ^ ")")
-    ~l:(fun _ b e -> "(" ^ "Λ" ^ g b ^ "." ^ e ^ ")")
+    ~l:(fun _ b e -> "(Λ" ^ g b ^ "." ^ e ^ ")")
     ~m:(fun e t -> "(" ^ e ^ " [" ^ t ^ "])")
 
 (** Parsed syntax. *)
