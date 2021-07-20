@@ -2,6 +2,8 @@ open Util
 open FunUtil
 open Syntax
 
+(** Folding. *)
+
 let rec fold_kind
     ~star:(s: 'm)
     ~arrow:(f: 'm -> 'm -> 'm)
@@ -56,3 +58,50 @@ let rec fold_term
     tap
       (fold_term ~tctx:tyo ~ctx:o ~f:f
          ~var:v ~abs:ab ~app:ap ~tabs:tab ~tapp:tap e) t
+
+(** Variable substitution schemes. *)
+
+let typ_scheme
+    ~ctx:(o: 'o) ~f:(f: 'b -> 'o -> 'o)
+    ~var:(v: 'o -> 'a -> ('c,'d) typ)
+    ~all:(al: 'o -> 'b -> 'd)
+    ~abs:(ab: 'o -> 'b -> 'd) : ('a,'b) typ -> ('c,'d) typ =
+  fold_typ
+    ~ctx:o ~f:f ~var:v
+    ~all:(fun o b -> tforall $ al o b)
+    ~abs:(fun o b -> tabs $ ab o b)
+    ~arr:tarrow ~app:tapp
+
+let term_scheme
+    ~tctx:(tyo: 'o) ~ctx:(o: 'o) ~f:(f: 'b -> 'o -> 'o)
+    ~ty:(ty: 'o -> ('a,'b) typ -> ('c,'d) typ)
+    ~var:(v: 'o -> 'a -> ('c,'d) term)
+    ~abs:(ab: 'o -> 'b -> 'd)
+    ~tabs:(tab: 'o -> 'b -> 'd) : ('a,'b) term -> ('c,'d) term =
+  fold_term
+    ~tctx:tyo ~ctx:o ~f:f
+    ~var:v ~app:app
+    ~abs:(fun o b t -> abs (ab o b) $ ty tyo t)
+    ~tabs:(fun o b -> typabs $ (tab o b))
+    ~tapp:(fun e t -> typapp e $ ty tyo t)
+
+(** Structure-preserving map under context. *)
+
+let map_typ_ctx
+    ~ctx:(o: 'o) ~f:(f: 'b -> 'o -> 'o)
+    ~var:(v: 'o -> 'a -> 'c)
+    ~all:(al: 'o -> 'b -> 'd)
+    ~abs:(ab: 'o -> 'b -> 'd) : ('a,'b) typ -> ('c,'d) typ =
+  typ_scheme
+    ~ctx:o ~f:f ~all:al ~abs:ab
+    ~var:(fun o -> tvar >> v o)
+
+let map_term_ctx
+    ~tctx:(tyo: 'o) ~ctx:(o: 'o) ~f:(f: 'b -> 'o -> 'o)
+    ~ty:(ty: 'o -> ('a,'b) typ -> ('c,'d) typ)
+    ~var:(v: 'o -> 'a -> 'c)
+    ~abs:(ab: 'o -> 'b -> 'd)
+    ~tabs:(tab: 'o -> 'b -> 'd) : ('a,'b) term -> ('c,'d) term =
+  term_scheme
+    ~tctx:tyo ~ctx:o ~f:f ~ty:ty ~abs:ab ~tabs:tab
+    ~var:(fun o -> var >> v o)
