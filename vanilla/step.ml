@@ -3,6 +3,8 @@ open Core
 open Option
 open Util
 open FunUtil
+open CompUtil
+open IntComp
 
 (** Shifts free variables above a cutoff [c] by [i] *)
 let rec shift (c : int) (i : int) (e : b_expr) : b_expr =
@@ -14,13 +16,17 @@ let rec shift (c : int) (i : int) (e : b_expr) : b_expr =
 (** Substitution [e{esub/m}] *)
 let rec sub (m : int) (esub : b_expr) (e : b_expr) : b_expr =
   match e with
-  | Var n -> if n = m then esub else Var n
-  | Lam (_,e) -> Lam ((), sub (m + 1) (shift 0 1 esub) e)
+  | Var n ->
+    begin match m <=> n with
+      | LT -> Var (n - 1)
+      | EQ -> shift 0 m esub
+      | GT -> Var n
+    end
+  | Lam (_,e) -> Lam ((), sub (m + 1) esub e)
   | App (e1,e2) -> App (sub m esub e1, sub m esub e2)
 
 (** Beta-reduction of [(fun x => e1) e2 -> e1{e2/x}] *)
-let beta_reduce (e1 : b_expr) (e2 : b_expr) : b_expr =
-  shift 0 (-1) $ sub 0 (shift 0 1 e2) e1
+let beta_reduce (e1 : b_expr) (e2 : b_expr) : b_expr = sub 0 e2 e1
 
 (** Call-by-value *)
 let rec cbv (e : b_expr) : b_expr option =

@@ -1,5 +1,8 @@
+open Core
 open Util
 open FunUtil
+open CompUtil
+open IntComp
 open Syntax
 
 let shift_typ (c: int) (i: int)
@@ -24,7 +27,11 @@ let typ_sub (n: int) (ts: b_typ)
   : b_typ -> b_typ =
   typ_scheme
     ~ctx:n ~succ:(consume $ (+) 1)
-    ~f:(fun n m -> if n = m then shift_typ 0 n ts else TVar m)
+    ~f:(fun n m ->
+        match n <=> m with
+        | LT -> tvar $ m - 1
+        | EQ -> shift_typ 0 n ts
+        | GT -> tvar m)
     ~g:(consume my_ignore)
 
 (** Substituting a [expr] into a [expr]. *)
@@ -34,7 +41,11 @@ let expr_sub (td: int) (n: int) (es: b_expr)
     ~tctx:td ~ectx:n ~succ:(consume $ (+) 1)
     ~f:(consume tvar)
     ~g:(consume my_ignore)
-    ~h:(fun td n m -> if n = m then shift_expr 0 td 0 n es else Var m)
+    ~h:(fun td n m ->
+        match n <=> m with
+        | LT -> var $ m - 1
+        | EQ -> shift_expr 0 0 td n es
+        | GT -> var m)
     ~i:(consume my_ignore)
 
 (** Substituting a [typ] into a [expr]. *)
@@ -42,18 +53,11 @@ let typ_expr_sub (n: int) (ts: b_typ)
   : b_expr -> b_expr =
   expr_scheme
     ~tctx:n ~ectx:0 ~succ:(consume $ (+) 1)
-    ~f:(fun n m -> if n = m then shift_typ 0 n ts else TVar m)
+    ~f:(fun n m ->
+        match n <=> m with
+        | LT -> tvar $ m - 1
+        | EQ -> shift_typ 0 n ts
+        | GT -> tvar m)
     ~g:(consume my_ignore)
     ~h:(consume $ consume var)
     ~i:(consume my_ignore)
-
-(** Top-level functions. *)
-
-let typ_sub_top (ts: b_typ) (t: b_typ) : b_typ =
-  shift_typ 0 (-1) $ typ_sub 0 (shift_typ 0 1 ts) t
-
-let expr_sub_top (es: b_expr) (e: b_expr) : b_expr =
-  shift_expr 0 0 0 (-1) $ expr_sub 0 0 (shift_expr 0 0 0 1 es) e
-
-let typ_expr_sub_top (ts: b_typ) (e: b_expr) : b_expr =
-  shift_expr 0 0 (-1) 0 $ typ_expr_sub 0 (shift_typ 0 1 ts) e

@@ -3,6 +3,8 @@ open Option
 open Syntax
 open Util
 open FunUtil
+open CompUtil
+open IntComp
 
 (** Dynamic Semantics. *)
 
@@ -17,13 +19,17 @@ let rec shift (c : int) (i : int)
 (** Substitution [e{esub/m}] *)
 let rec sub (m : int) (esub : b_expr)
   : b_expr -> b_expr = function
-  | Var n -> if n = m then esub else Var n
-  | Abs (_,t,e) -> Abs ((), t, sub (m + 1) (shift 0 1 esub) e)
+  | Var n ->
+    begin match n <=> m with
+      | LT -> Var (n - 1)
+      | EQ -> shift 0 m esub
+      | GT -> Var n
+    end
+  | Abs (_,t,e) -> Abs ((), t, sub (m + 1) esub e)
   | App (e1,e2) -> App (sub m esub e1, sub m esub e2)
 
 (** Beta-reduction of [(fun x:t => e1) e2 -> e1{e2/x}] *)
-let beta_reduce (e1 : b_expr) (e2 : b_expr) : b_expr =
-  shift 0 (-1) $ sub 0 (shift 0 1 e2) e1
+let beta_reduce (e1 : b_expr) (e2 : b_expr) : b_expr = sub 0 e2 e1
 
 (** Call-by-value *)
 let rec cbv : b_expr -> b_expr option = function

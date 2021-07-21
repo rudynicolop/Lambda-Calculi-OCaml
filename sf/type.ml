@@ -54,7 +54,7 @@ let rec type_b_expr (td: int) (g : b_typ list)
     let open Result in
     if wf td t then
       type_b_expr td g e >>= begin function
-        | TForall (_,te) -> return $ typ_sub_top t te
+        | TForall (_,te) -> return $ typ_sub 0 t te
         | t' -> IllegalTypApp (td,g,e,t',t) |> fail
       end
     else
