@@ -37,13 +37,13 @@ let rec fold_typ
 let rec fold_term
     ~tctx:(tyo: 'o) ~ctx:(o: 'o) ~f:(f: 'b -> 'o -> 'o)
     ~var:(v: 'o -> 'a -> 's)
-    ~abs:(ab: 'o -> 'b -> ('a,'b) typ -> 's -> 's)
+    ~abs:(ab: 'o -> 'o -> 'b -> ('a,'b) typ -> 's -> 's)
     ~app:(ap: 's -> 's -> 's)
     ~tabs:(tab: 'o -> 'b -> kind -> 's -> 's)
-    ~tapp:(tap: 's -> ('a,'b) typ -> 's) : ('a,'b) term -> 's = function
+    ~tapp:(tap: 'o -> 's -> ('a,'b) typ -> 's) : ('a,'b) term -> 's = function
   | Var a -> v o a
   | Abs (b,t,e) ->
-    ab o b t $ fold_term
+    ab tyo o b t $ fold_term
       ~tctx:tyo ~ctx:(f b o) ~f:f
       ~var:v ~abs:ab ~app:ap ~tabs:tab ~tapp:tap e
   | App (e1,e2) ->
@@ -52,11 +52,11 @@ let rec fold_term
     $ fold_term ~tctx:tyo ~ctx:o ~f:f
       ~var:v ~abs:ab ~app:ap ~tabs:tab ~tapp:tap e2
   | TypAbs (b,k,e) ->
-    tab o b k $ fold_term
+    tab tyo b k $ fold_term
       ~tctx:(f b tyo) ~ctx:o ~f:f
       ~var:v ~abs:ab ~app:ap ~tabs:tab ~tapp:tap e
   | TypApp (e,t) ->
-    tap
+    tap tyo
       (fold_term ~tctx:tyo ~ctx:o ~f:f
          ~var:v ~abs:ab ~app:ap ~tabs:tab ~tapp:tap e) t
 
@@ -82,9 +82,9 @@ let term_scheme
   fold_term
     ~tctx:tyo ~ctx:o ~f:f
     ~var:v ~app:app
-    ~abs:(fun o b t -> abs (ab o b) $ ty tyo t)
+    ~abs:(fun tyo o b t -> abs (ab o b) $ ty tyo t)
     ~tabs:(fun o b -> typabs $ (tab o b))
-    ~tapp:(fun e t -> typapp e $ ty tyo t)
+    ~tapp:(fun tyo e t -> typapp e $ ty tyo t)
 
 (** Structure-preserving map under context. *)
 
@@ -128,11 +128,11 @@ let p_of_b_typ (d: int) : b_typ -> p_typ =
     ~all:(fun d _ -> "T" ^ (string_of_int $ d + 1))
     ~abs:(fun d _ -> "T" ^ (string_of_int $ d + 1))
 
-let p_of_term (td: int) (d: int) : b_term -> p_term =
+let p_of_b_term (td: int) (d: int) : b_term -> p_term =
   map_term_ctx
     ~tctx:td ~ctx:d ~f:(consume $ (+) 1) ~ty:p_of_b_typ
-    ~var:(fun d n -> "T" ^ (string_of_int $ d - n))
-    ~abs:(fun d _ -> "T" ^ (string_of_int $ d + 1))
+    ~var:(fun d n -> "x" ^ (string_of_int $ d - n))
+    ~abs:(fun d _ -> "x" ^ (string_of_int $ d + 1))
     ~tabs:(fun d _ -> "T" ^ (string_of_int $ d + 1))
 
 (** [string_of] functions. *)
@@ -159,12 +159,12 @@ let string_of_term
   fold_term
     ~tctx:() ~ctx:() ~f:(consume my_ignore)
     ~var:(consume fa)
-    ~abs:(fun _ b t e ->
+    ~abs:(fun _ _ b t e ->
         "(λ" ^ fb b ^ ":" ^ string_of_typ fa fb t ^ "." ^ e ^ ")")
     ~app:(fun t1 t2 -> "(" ^ t1 ^ " " ^ t2 ^ ")")
     ~tabs:(fun _ b k e ->
         "(Λ" ^ fb b ^ "::" ^ string_of_kind k ^ "." ^ e ^ ")")
-    ~tapp:(fun e t -> "(" ^ e ^ " [" ^ string_of_typ fa fb t ^ "])")
+    ~tapp:(fun _ e t -> "(" ^ e ^ " [" ^ string_of_typ fa fb t ^ "])")
 
 let string_of_p_typ : p_typ -> string =
   string_of_typ id id

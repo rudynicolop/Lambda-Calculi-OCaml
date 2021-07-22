@@ -14,7 +14,7 @@ Let the meta-variables
 ```
 k ::= * | k1 => k2
 t ::= T | forall T::k, t | t1 -> t2 | fun T::k. t | t1 t2
-e ::= x | fun x:t. e | e1 e2 | /\ T::k. e | e [t]
+e ::= x | fun x:t. e | e1 e2 | Lam T::k. e | e [t]
 ```
 
 ### Lambda Cube
@@ -23,8 +23,20 @@ This system combines the powers of System-F & λω.
 ```
 fun x:t. e (* term-binding term *)
 e1 e2 (* term binding a term *)
-/\ T::k. e (* type-binding term *)
+Lam T::k. e (* type-binding term *)
 e [t] (* term binding a type *)
 fun T::k. t (* type-binding type *)
 t1 t2 (* type binding a type *)
+```
+
+## Running a program
+
+The command line template to run some program is:
+```
+dune exec ./bin/main.exe fomega -- <SEMANTICS> <FILENAME>
+```
+
+For example, to type `fomega/samples/id.fo`, enter:
+```
+dune exec ./bin/main.exe fomega -- -type fomega/samples/id.fo
 ```
