@@ -1,6 +1,6 @@
 # λω
 
-The simply-typed lambda-calculus extended with type operators/constructors.
+λ→ extended with type operators/constructors.
 
 ## Syntax
 
@@ -18,7 +18,7 @@ t ::= Bot | T | Fun T::k. t | t1 t2 | t1 -> t2
 e ::= x | fun x:t => e | e1 e2
 ```
 
-### Lambda Cube
+### λ-Cube
 λω extends λ→ with types parameterized by types:
 ```
 fun x:t => e (* term-binding term *)

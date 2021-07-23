@@ -1,6 +1,6 @@
 # (λ→) The Simply-Typed Lambda Calculus
 
-Lambda calculus with simple types.
+λ-calculus with simple types.
 
 ## Syntax
 
@@ -13,14 +13,14 @@ t ::= False | t1 -> t2
 e ::= x | fun x:t => e | e1 e2
 ```
 
-### Lambda Cube
+### λ-Cube
 
 λ→ only features terms parameterized by terms:
 ```
 fun x:t => e (* term-binding term *)
 e1 e2 (* term binding a term *)
 ```
-λ→ rests at the bottom of the lambda cube.
+λ→ rests at the bottom of the λ-cube.
 
 ## Running a program
 

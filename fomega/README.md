@@ -17,7 +17,7 @@ t ::= T | forall T::k, t | t1 -> t2 | fun T::k. t | t1 t2
 e ::= x | fun x:t. e | e1 e2 | Lam T::k. e | e [t]
 ```
 
-### Lambda Cube
+### λ-Cube
 
 This system combines the powers of System-F & λω.
 ```

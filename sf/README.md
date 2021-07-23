@@ -1,6 +1,6 @@
 # (λ2) System-F
 
-Lambda calculus with parametric polymorphism.
+λ-calculus with parametric polymorphism.
 
 ## Syntax
 
@@ -14,7 +14,7 @@ t ::= T | forall T, t | t1 -> t2
 e ::= x | fun x:t => e | e1 e2 | Lam T. e | e [t]
 ```
 
-### Lambda Cube
+### λ-Cube
 
 System-F extends λ→ with terms parameterized by types:
 ```

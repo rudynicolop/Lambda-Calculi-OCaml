@@ -1,0 +1,12 @@
+Lam E::*.
+
+(Lam List::*=>*. fun cons: forall B::*, B -> List B -> List B.
+     fun h:E. fun t:List E. cons [E] h t)
+
+     [fun A::*. forall R::*, (A -> R -> R) -> R -> R]
+
+     (Lam Q::*. fun h:Q.
+     	  fun t:forall R::*, (Q -> R -> R) -> R -> R.
+	  (Lam L::*.
+	  fun f:Q -> L -> L.
+	  fun n:L. f h (t [L] f n)))
