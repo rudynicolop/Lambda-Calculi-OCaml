@@ -1,0 +1,1 @@
+fun h: (fun J::*=>*. fun U::*. J U) (forall K::*, K) (forall K::*, K). h

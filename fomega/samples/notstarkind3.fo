@@ -1,0 +1,1 @@
+fun h: forall G::*=>*, G. h

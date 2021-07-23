@@ -1,0 +1,1 @@
+fun g: (fun D::*. D -> D) (fun K::*. K). g

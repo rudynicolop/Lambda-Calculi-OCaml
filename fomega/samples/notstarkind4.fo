@@ -1,0 +1,1 @@
+(Lam H::*. fun h:H->H. h) [forall J::*, (fun G::*=>*. G J)]

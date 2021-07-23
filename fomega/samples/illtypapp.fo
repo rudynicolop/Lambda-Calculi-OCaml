@@ -1,0 +1,1 @@
+fun j: (forall W::*, W -> W) (forall T::*, T). j

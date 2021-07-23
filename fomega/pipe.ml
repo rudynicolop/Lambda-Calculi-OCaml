@@ -50,11 +50,12 @@ let string_of_kind_error
     ", argument " ^ string_of_p_typ t2' ^
     " is expected to have kind " ^ string_of_kind k1 ^
     ", but has kind " ^ string_of_kind k2
-  | Kinding.NotStarKind (g,k,ta,t) ->
+  | Kinding.NotStarKind (g,g',k,ta,t) ->
     let d = List.length g in
+    let d' = List.length g' in
     let ta' = p_of_b_typ d ta in
-    let t' = p_of_b_typ d t in
-    "In arrow-type " ^ string_of_p_typ ta' ^
+    let t' = p_of_b_typ d' t in
+    "In type " ^ string_of_p_typ ta' ^
     ", type " ^ string_of_p_typ t' ^
     " is expected to have kind " ^ string_of_kind KStar ^
     ", but has kind " ^ string_of_kind k

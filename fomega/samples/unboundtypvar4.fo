@@ -1,0 +1,1 @@
+fun k: fun J::*. P. k

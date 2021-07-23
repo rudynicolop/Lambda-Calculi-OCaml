@@ -1,0 +1,1 @@
+fun o: (forall C::*, C) -> (fun H::*. H) C. o

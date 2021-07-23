@@ -1,0 +1,1 @@
+fun r: (fun Y::*. fun O::*=>*. forall P::*=>*, P (O Y)) -> (forall H::*,H). r

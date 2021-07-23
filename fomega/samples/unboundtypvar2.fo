@@ -1,0 +1,1 @@
+(fun x: forall U::*, U. x) [H]

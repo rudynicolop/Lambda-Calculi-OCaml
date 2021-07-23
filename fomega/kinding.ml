@@ -9,7 +9,7 @@ type kind_error =
   | UnboundTypVar of kind list * int
   | IllegalTypApp of kind list * kind * b_typ * b_typ
   | KindMismatch of kind list * kind * kind * b_typ * b_typ
-  | NotStarKind of kind list * kind * b_typ * b_typ
+  | NotStarKind of kind list * kind list * kind * b_typ * b_typ
 
 (** Kinding judgement. *)
 let rec kinding (g: kind list)
@@ -34,12 +34,12 @@ let rec kinding (g: kind list)
     kinding g t2 >>= fun k2 ->
     begin match k1, k2 with
       | KStar, KStar -> return KStar
-      | KStar, _ -> fail $ NotStarKind (g,k2,t1,ta)
-      | _, _ -> fail $ NotStarKind (g,k1,t2,ta)
+      | KStar, _ -> fail $ NotStarKind (g,g,k2,ta,t2)
+      | _, _ -> fail $ NotStarKind (g,g,k1,ta,t1)
     end
   | TForall (_,k,t) as tf ->
     kinding (k :: g) t >>=
     begin function
       | KStar -> return KStar
-      | k -> fail $ NotStarKind (g,k,t,tf)
+      | k -> fail $ NotStarKind (g,k::g,k,tf,t)
     end    
