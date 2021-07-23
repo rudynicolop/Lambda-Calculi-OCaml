@@ -1,0 +1,2 @@
+Lam E::*. fun h:E. fun t: forall R::*, (E -> R -> R) -> R -> R.
+(Lam L::*. fun f:E->L->L. fun n:L. f h (t [L] f n))

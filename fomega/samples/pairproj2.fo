@@ -1,0 +1,9 @@
+(Lam X::*. Lam Y::*.
+
+(Lam Pair::*=>*=>*.
+     fun fst:Pair X Y -> X. fun p:Pair X Y. fst p)
+
+[fun A::*. fun B::*. forall R::*, (A -> B -> R) -> R]
+
+(fun pair:forall K::*, (X -> Y -> K) -> K.
+     pair [X] (fun x:X. fun y:Y. x)))

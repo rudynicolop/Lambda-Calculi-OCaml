@@ -1,0 +1,18 @@
+(Lam Pair::*=>*=>*. Lam X::*. Lam Y::*.
+     fun p:Pair X Y. fun fst:Pair X Y -> X. fst p)
+
+[fun A::*. fun B::*. forall R::*, (A -> B -> R) -> R]
+
+[forall Q::*, Q->Q]
+
+[forall N::*, (N->N)->N->N]
+
+(Lam S::*.
+     fun f:(forall K::*, K->K) ->
+     	 (forall I::*, (I->I)->I->I) -> S.
+	 f (Lam A::*. fun a:A. a) (Lam U::*. fun g:U->U. fun z:U. g (g z)))
+
+(fun w: forall K::*,
+     ((forall A::*, A->A) -> (forall O::*, (O->O)->O->O)->K)->K.
+     w [forall Y::*,Y->Y]
+     (fun i:forall V::*, V->V. fun n:forall S::*, (S->S)->S->S. i))
