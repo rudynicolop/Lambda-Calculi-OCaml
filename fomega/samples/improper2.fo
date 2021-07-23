@@ -1,0 +1,1 @@
+fun u: (fun U::*=>*. fun G::*. U (U G)) (fun H::*. H->H). u

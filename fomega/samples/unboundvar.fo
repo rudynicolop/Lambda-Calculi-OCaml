@@ -1,0 +1,1 @@
+fun y:forall U::*,U. w

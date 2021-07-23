@@ -1,0 +1,3 @@
+(Lam W::*=>*. Lam Q::*. fun f: Q -> W Q. fun q:Q. f q)
+     [fun A::*. A -> A]
+     [fun H::*. H]

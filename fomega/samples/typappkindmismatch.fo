@@ -1,0 +1,2 @@
+Lam A::*=>*. Lam B::*.
+    (Lam H::*=>*. fun h:H B. h) [A B]

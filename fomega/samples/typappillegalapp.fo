@@ -1,0 +1,1 @@
+(fun q: forall G::*, G -> G. q) [fun T::*. T -> T]

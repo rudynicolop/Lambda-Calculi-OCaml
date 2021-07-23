@@ -1,0 +1,1 @@
+(Lam Y::*. fun y:Y. y) (Lam J::*. fun j:J. j)

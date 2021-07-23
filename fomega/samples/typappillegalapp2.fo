@@ -1,0 +1,3 @@
+(Lam C::*. fun c:C->C. fun a:C. c (c a))
+     [forall Q::*, Q]
+     [forall A::*, A -> A]

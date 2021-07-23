@@ -1,0 +1,3 @@
+(Lam U::*. fun u:U. u)
+     [forall O::*,O->O]
+     (Lam J::*. fun f:J->J. fun j:J. f j)

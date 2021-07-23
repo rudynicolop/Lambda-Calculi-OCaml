@@ -1,0 +1,1 @@
+(Lam K::*. fun w:K -> K. fun q:K. w q) w

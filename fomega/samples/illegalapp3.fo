@@ -1,0 +1,9 @@
+(Lam U::*. Lam V::*. fun f:U->V. fun u:U. f u)
+[forall J::*, (J -> J) -> J -> J]
+[forall P::*, (P -> P) -> P -> P]
+
+(fun n: forall G::*, (G -> G) -> G -> G. n)
+
+(Lam X::*. fun g:X->X. fun z:X. g z)
+
+(Lam W::*. fun w:W. w)
