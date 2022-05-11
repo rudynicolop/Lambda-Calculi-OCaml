@@ -7,7 +7,7 @@ open Option
 
 let rec normal : b_typ -> b_typ option = function
   | TAbs (_,k,t) -> normal t >>| tabs () k
-  | TApp (TAbs (_,_,t1), t2) -> some $ sub_typ 0 t2 t1
+  | TApp (TAbs (_,_,t1), t2) -> some $ sub_typ ~arg:t2 t1
   | TApp (t1,t2) ->
     begin match normal t1 with
       | Some t1' -> some $ tapp t1' t2

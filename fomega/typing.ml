@@ -43,7 +43,7 @@ let rec typing (kg: kind list) (tg: b_typ list)
   | TypAbs (_,k,e) ->
     typing
       (k :: kg)
-      (List.map ~f:(shift_typ 1 0) tg)
+      (List.map ~f:(rename_typ ((+) 1)) tg)
       e >>| tforall () k
   | TypApp (e,t) ->
     begin match kinding kg t with
@@ -52,7 +52,7 @@ let rec typing (kg: kind list) (tg: b_typ list)
         typing kg tg e >>= fun te ->
         begin match normalize te with
           | TForall (_,ke,te)
-            when ke =? k -> return $ sub_typ 0 t te
+            when ke =? k -> return $ sub_typ ~arg:t te
           | TForall (_,ke,_) ->
             fail $ TypAppKindMismatch (kg,tg,ke,k,e,t)
           | te -> fail $ TypAppIllegalApp (kg,tg,e,t,te)

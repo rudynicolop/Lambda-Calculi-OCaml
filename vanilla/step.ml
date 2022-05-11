@@ -4,34 +4,33 @@ open Option
 open Util
 open FunUtil
 open CompUtil
-open IntComp
 
-(** Shifts free variables above a cutoff [c] by [i] *)
-let rec shift (c : int) (i : int) (e : b_expr) : b_expr =
-  match e with
-  | Var n -> if n < c then Var n else Var (n + i)
-  | Lam (_,e) -> Lam ((), shift (c + 1) i e)
-  | App (e1,e2) -> App (shift c i e1, shift c i e2)
+let rec rename (r : int -> int) : b_expr -> b_expr =
+  function
+  | Var x -> Var (r x)
+  | Lam (_,e) -> Lam ((), rename (ext r) e)
+  | App (e1,e2) -> App (rename r e1, rename r e2)
 
-(** Substitution [e{esub/m}] *)
-let rec sub (m : int) (esub : b_expr) (e : b_expr) : b_expr =
-  match e with
-  | Var n ->
-    begin match m <=> n with
-      | LT -> Var (n - 1)
-      | EQ -> shift 0 m esub
-      | GT -> Var n
-    end
-  | Lam (_,e) -> Lam ((), sub (m + 1) esub e)
-  | App (e1,e2) -> App (sub m esub e1, sub m esub e2)
+let exts (s : int -> b_expr) (x : int) : b_expr =
+  if x < 1 then Var x else rename ((+) 1) $ s (x - 1)
+
+let rec subs (s : int -> b_expr) : b_expr -> b_expr =
+  function
+  | Var x -> s x
+  | Lam (_,e) -> Lam ((), subs (exts s) e)
+  | App (e1,e2) -> App (subs s e1, subs s e2)
+
+let sub_helper (e : b_expr) (x : int) : b_expr =
+  if x = 0 then e else Var (x - 1)
 
 (** Beta-reduction of [(fun x => e1) e2 -> e1{e2/x}] *)
-let beta_reduce (e1 : b_expr) (e2 : b_expr) : b_expr = sub 0 e2 e1
+let sub ~arg:(arg : b_expr) : b_expr -> b_expr =
+  subs $ sub_helper arg
 
 (** Call-by-value *)
 let rec cbv (e : b_expr) : b_expr option =
   match e with
-  | App (Lam (_,e1), (Lam (_,_) | Var _ as e2)) -> some $ beta_reduce e1 e2
+  | App (Lam (_,e1), (Lam (_,_) | Var _ as e2)) -> some $ sub ~arg:e2 e1
   | App (e1, e2) ->
     begin match cbv e1 with
     | None -> cbv e2 >>| fun e2' -> App (e1, e2')
@@ -42,7 +41,7 @@ let rec cbv (e : b_expr) : b_expr option =
 (** Call-by-name *)
 let rec cbn (e : b_expr) : b_expr option =
   match e with
-  | App (Lam (_,e1), e2) -> some $ beta_reduce e1 e2
+  | App (Lam (_,e1), e2) -> some $ sub ~arg:e2 e1
   | App (e1, e2) -> cbn e1 >>| fun e1' -> App (e1', e2)
   | _ -> None
 
@@ -50,7 +49,7 @@ let rec cbn (e : b_expr) : b_expr option =
 let rec normal (e : b_expr) : b_expr option =
   match e with
   | Lam (_,e) -> normal e >>| fun e' -> Lam ((),e')
-  | App (Lam (_,e1), e2) -> some $ beta_reduce e1 e2
+  | App (Lam (_,e1), e2) -> some $ sub ~arg:e2 e1
   | App (Var _ as e1, e2) -> normal e2 >>| fun e2' -> App (e1,e2')
   | App (e1, e2) -> normal e1 >>| fun e1' -> App (e1',e2)
   | _ -> None
@@ -68,7 +67,7 @@ let rec applicative (e : b_expr) : b_expr option =
   match e with
   | Lam (_, e) -> applicative e >>| fun e' -> Lam ((),e')
   | App (Lam (_,e1), e2) when applicative_stuck e1 && applicative_stuck e2
-    -> some $ beta_reduce e1 e2
+    -> some $ sub ~arg:e2 e1
   | App (e1, e2) when applicative_stuck e1 ->
     applicative e2 >>| fun e2' -> App (e1,e2')
   | App (e1, e2) ->

@@ -14,7 +14,7 @@ let rec stuck : b_typ -> bool = function
   | TArrow (t1,t2) -> stuck t1 && stuck t2
 
 let rec normal : b_typ -> b_typ option = function
-  | TApp (TAbs (_,_,t1),t2) -> some $ sub_typ 0 t2 t1
+  | TApp (TAbs (_,_,t1),t2) -> some $ sub_typ ~arg:t2 t1
   | TApp (t1,t2) when stuck t1 -> normal t2 >>| tapp t1
   | TApp (t1,t2) -> normal t1 >>| fun t1' -> tapp t1' t2
   | TAbs (_,k,t) -> normal t >>| tabs () k

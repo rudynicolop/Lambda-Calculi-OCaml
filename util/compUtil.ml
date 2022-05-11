@@ -16,3 +16,6 @@ module IntComp : Comp
     else if a > 0 then GT
     else EQ
 end
+
+let ext (r : int -> int) (x : int) : int =
+  if x < 1 then x else 1 + r (x - 1)

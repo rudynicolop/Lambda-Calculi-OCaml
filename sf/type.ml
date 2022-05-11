@@ -48,13 +48,13 @@ let rec type_b_expr (td: int) (g : b_typ list)
     let open Result in
     type_b_expr
       (td + 1)
-      (List.map ~f:(shift_typ 0 1) g)
+      (List.map ~f:(rename_typ ((+) 1)) g)
       e >>| tforall ()
   | TypApp (e,t) as tapp ->
     let open Result in
     if wf td t then
       type_b_expr td g e >>= begin function
-        | TForall (_,te) -> return $ typ_sub 0 t te
+        | TForall (_,te) -> return $ sub_typ ~arg:t te
         | t' -> IllegalTypApp (td,g,e,t',t) |> fail
       end
     else

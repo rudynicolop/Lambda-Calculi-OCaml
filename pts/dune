@@ -1,0 +1,7 @@
+; (menhir (flags --table --explain) (modules parser))
+
+; (ocamllex (modules lexer))
+
+(library
+	(name pts)
+	(libraries core menhirLib util))

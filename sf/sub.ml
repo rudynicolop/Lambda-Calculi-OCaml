@@ -2,62 +2,70 @@ open Core
 open Util
 open FunUtil
 open CompUtil
-open IntComp
 open Syntax
 
-let shift_typ (c: int) (i: int)
-  : b_typ -> b_typ =
-  typ_map_ctx
-    ~ctx:c ~succ:(consume $ (+) 1)
-    ~f:(fun c n -> if n < c then n else n + i)
-    ~g:(consume my_ignore)
+let rec rename_typ (r : int -> int) : b_typ -> b_typ =
+  function
+  | TVar x -> TVar (r x)
+  | TForall (_,t) -> TForall ((), rename_typ (ext r) t)
+  | TArrow (t1,t2) -> TArrow (rename_typ r t1, rename_typ r t2)
 
-let shift_expr
-    (ct: int) (ce: int) (it: int) (ie: int)
-  : b_expr -> b_expr =
-  expr_map_ctx
-    ~tctx:ct ~ectx:ce ~succ:(consume $ (+) 1)
-    ~f:(fun ct n -> if n < ct then n else n + it)
-    ~g:(consume my_ignore)
-    ~h:(fun _ ce n -> if n < ce then n else n + ie)
-    ~i:(consume my_ignore)
+let exts_typ (s : int -> b_typ) (x : int) : b_typ =
+  if x < 1 then TVar x else rename_typ ((+) 1) $ s (x - 1)
 
-(** Substituting a [typ] into a [typ]. *)
-let typ_sub (n: int) (ts: b_typ)
-  : b_typ -> b_typ =
-  typ_scheme
-    ~ctx:n ~succ:(consume $ (+) 1)
-    ~f:(fun n m ->
-        match n <=> m with
-        | LT -> tvar $ m - 1
-        | EQ -> shift_typ 0 n ts
-        | GT -> tvar m)
-    ~g:(consume my_ignore)
+let rec subs_typ (s : int -> b_typ) : b_typ -> b_typ =
+  function
+  | TVar x -> s x
+  | TForall (_,t) -> TForall ((), subs_typ (exts_typ s) t)
+  | TArrow (t1,t2) -> TArrow (subs_typ s t1, subs_typ s t2)
 
-(** Substituting a [expr] into a [expr]. *)
-let expr_sub (td: int) (n: int) (es: b_expr)
-  : b_expr -> b_expr =
-  expr_scheme
-    ~tctx:td ~ectx:n ~succ:(consume $ (+) 1)
-    ~f:(consume tvar)
-    ~g:(consume my_ignore)
-    ~h:(fun td n m ->
-        match n <=> m with
-        | LT -> var $ m - 1
-        | EQ -> shift_expr 0 0 td n es
-        | GT -> var m)
-    ~i:(consume my_ignore)
+let sub_typ_helper (t : b_typ) (x : int) : b_typ =
+  if x = 0 then t else TVar (x - 1)
 
-(** Substituting a [typ] into a [expr]. *)
-let typ_expr_sub (n: int) (ts: b_typ)
-  : b_expr -> b_expr =
-  expr_scheme
-    ~tctx:n ~ectx:0 ~succ:(consume $ (+) 1)
-    ~f:(fun n m ->
-        match n <=> m with
-        | LT -> tvar $ m - 1
-        | EQ -> shift_typ 0 n ts
-        | GT -> tvar m)
-    ~g:(consume my_ignore)
-    ~h:(consume $ consume var)
-    ~i:(consume my_ignore)
+let sub_typ ~arg:(arg : b_typ) : b_typ -> b_typ =
+  subs_typ $ sub_typ_helper arg
+
+let rec rename_typ_term (r : int -> int) : b_expr -> b_expr =
+  function
+  | Var x -> Var x
+  | Abs (_,t,e) -> Abs ((), rename_typ r t, rename_typ_term r e)
+  | App (e1,e2) -> App (rename_typ_term r e1, rename_typ_term r e2)
+  | TypAbs (_,e) -> TypAbs ((), rename_typ_term (ext r) e)
+  | TypApp (e,t) -> TypApp (rename_typ_term r e, rename_typ r t)
+
+let rec subs_typ_term (s : int -> b_typ) : b_expr -> b_expr =
+  function
+  | Var x -> Var x
+  | Abs (_,t,e) -> Abs ((), subs_typ s t, subs_typ_term s e)
+  | App (e1,e2) -> App (subs_typ_term s e1, subs_typ_term s e2)
+  | TypAbs (_,e) -> TypAbs ((), subs_typ_term (exts_typ s) e)
+  | TypApp (e,t) -> TypApp (subs_typ_term s e, subs_typ s t)
+
+let sub_typ_term (e : b_expr) (t : b_typ) : b_expr =
+  subs_typ_term (sub_typ_helper t) e
+
+let rec rename (r : int -> int) : b_expr -> b_expr =
+  function
+  | Var x -> Var (r x)
+  | Abs (_,t,e) -> Abs ((), t, rename (ext r) e)
+  | App (e1,e2) -> App (rename r e1, rename r e2)
+  | TypAbs (_,e) -> TypAbs ((), rename r e)
+  | TypApp (e,t) -> TypApp (rename r e, t)
+
+let exts (s : int -> b_expr) (x : int) : b_expr =
+  if x < 1 then Var x else rename ((+) 1) $ s (x - 1)
+
+let rec subs (s : int -> b_expr) : b_expr -> b_expr =
+  function
+  | Var x -> s x
+  | Abs (_,t,e) -> Abs ((), t, subs (exts s) e)
+  | App (e1,e2) -> App (subs s e1, subs s e2)
+  | TypAbs (_,e) -> TypAbs ((), subs s e)
+  | TypApp (e,t) -> TypApp (subs s e, t)
+
+let sub_helper (e : b_expr) (x : int) : b_expr =
+  if x = 0 then e else Var (x - 1)
+
+(** Beta-reduction of [(fun x => e1) e2 -> e1{e2/x}] *)
+let sub ~arg:(arg : b_expr) : b_expr -> b_expr =
+  subs $ sub_helper arg
