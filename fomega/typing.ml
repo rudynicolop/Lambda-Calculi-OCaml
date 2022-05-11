@@ -5,7 +5,7 @@ open FunUtil
 open Syntax
 open Sub
 open Kinding
-open TypeReduce
+open Equiv
 
 (** Typing errors. *)
 type type_error =
@@ -34,9 +34,9 @@ let rec typing (kg: kind list) (tg: b_typ list)
   | App (e1,e2) ->
     typing kg tg e2 >>= fun t2 ->
     typing kg tg e1 >>= fun t1 ->
-    begin match normalize t1 with
+    begin match weak_norm t1 with
       | TArrow (t,t')
-        when normalize t == normalize t2 -> return t'
+        when t == t2 -> return t'
       | TArrow (t,_) -> fail $ TypMismatch (kg,tg,t,t2,e1,e2)
       | t1 -> fail $ IllegalApp (kg,tg,t1,e1,e2)
     end
@@ -50,7 +50,7 @@ let rec typing (kg: kind list) (tg: b_typ list)
       | Error err -> fail $ KindingError err
       | Ok k ->
         typing kg tg e >>= fun te ->
-        begin match normalize te with
+        begin match weak_norm te with
           | TForall (_,ke,te)
             when ke =? k -> return $ sub_typ ~arg:t te
           | TForall (_,ke,_) ->

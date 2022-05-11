@@ -51,6 +51,7 @@ let rec (=?) (k1: kind) (k2: kind) : bool =
     k11 =? k21 && k12 =? k22
   | _, _ -> false
 
+(*
 (** Type equality. *)
 let rec (==) (t1: b_typ) (t2: b_typ) : bool =
   match t1, t2 with
@@ -62,3 +63,4 @@ let rec (==) (t1: b_typ) (t2: b_typ) : bool =
   | TForall (_,k1,t1), TForall (_,k2,t2) ->
     k1 =? k2 && t1 == t2
   | _, _ -> false
+*)

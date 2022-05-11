@@ -129,7 +129,7 @@ let parse_and_type (filename : string) : b_term option =
   match Typing.typing [] [] e with
   | Result.Ok t ->
     t
-    |> TypeReduce.normalize
+    |> Equiv.weak_norm
     |> p_of_b_typ 0
     |> string_of_p_typ
     |> (^) "Program has type "
