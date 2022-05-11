@@ -50,6 +50,7 @@ let rec (=?) (k1: kind) (k2: kind) : bool =
   | _, _ -> false
 
 (** Type equality of De Bruijn types. *)
+    (*
 let rec (==) (t1: b_typ) (t2: b_typ) : bool =
   match t1, t2 with
   | TBot, TBot -> true
@@ -58,3 +59,4 @@ let rec (==) (t1: b_typ) (t2: b_typ) : bool =
   | TArrow (t11,t12), TArrow (t21,t22)
   | TApp (t11,t12), TApp (t21,t22) -> t11 == t21 && t12 == t22
   | _, _ -> false
+*)
