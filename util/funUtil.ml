@@ -9,7 +9,7 @@ let (>>) f g = fun x -> x |> g |> f
 (** Haskell-style dollar-sign *)
 let ($) f x = f x
 
-let my_ignore (_:'a) : unit = ()
+let my_ignore : 'a. 'a -> unit = fun _ -> ()
 
 (** Consume unused argument. *)
 let consume (f: 'b) : 'a -> 'b = fun _ -> f
@@ -26,8 +26,8 @@ let rec multi_red
   f e; red e >>= multi_red red f
 
 let rec refl_trans_clos
-    (red: 'a -> 'a option)
-    (f: 'a -> unit) (t: 'a) : 'a =
+  : 'a. ('a -> 'a option) -> ('a -> unit) -> 'a -> 'a =
+  fun red f t ->
   f t; match red t with
   | Some t -> refl_trans_clos red f t
   | None -> t
