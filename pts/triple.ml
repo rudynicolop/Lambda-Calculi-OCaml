@@ -14,6 +14,9 @@ module type Triple = sig
 
   (** Sort equality. *)
   val (=?) : sort -> sort -> bool
+
+  (** For printing. *)
+  val string_of_sort : sort -> string
 end
 
 (** Sorts of the Lambda-Cube. *)
@@ -30,6 +33,10 @@ let cube_sort_eq s1 s2 =
   | Kind, Kind -> true
   | _, _ -> false
 
+let string_of_cube_sort = function
+  | Type -> "*"
+  | Kind -> "□"
+
 (** Simply-typed lambda-calculus. *)
 module STLC : Triple = struct
   type sort = cube_sort
@@ -42,6 +49,8 @@ module STLC : Triple = struct
     | _, _ -> false
 
   let (=?) = cube_sort_eq
+
+  let string_of_sort = string_of_cube_sort
 end
 
 (** System F. *)
@@ -57,6 +66,8 @@ module SystemF : Triple = struct
     | _, _ -> false
 
   let (=?) = cube_sort_eq
+
+  let string_of_sort = string_of_cube_sort
 end
 
 (** Lambda Omgea. *)
@@ -72,6 +83,8 @@ module LambdaOmgea : Triple = struct
     | _, _ -> false
 
   let (=?) = cube_sort_eq
+
+  let string_of_sort = string_of_cube_sort
 end
 
 (** System F-Omega. *)
@@ -88,6 +101,8 @@ module SysFOmega : Triple = struct
     | _, _ -> false
 
   let (=?) = cube_sort_eq
+
+  let string_of_sort = string_of_cube_sort
 end
 
 (** Lambda P. *)
@@ -103,6 +118,8 @@ module LambdaP : Triple = struct
     | _, _ -> false
 
   let (=?) = cube_sort_eq
+
+  let string_of_sort = string_of_cube_sort
 end
 
 (** Calculus of constructions. *)
@@ -115,6 +132,8 @@ module COC : Triple = struct
   let rules _ _ = true
 
   let (=?) = cube_sort_eq
+
+  let string_of_sort = string_of_cube_sort
 end
 
 (** System U. *)
@@ -143,4 +162,9 @@ module SystemU : Triple = struct
     | Square, Square
     | Triangle, Triangle -> true
     | _, _ -> false
+
+  let string_of_sort = function
+    | Star -> "*"
+    | Square -> "□"
+    | Triangle -> "∆"
 end
