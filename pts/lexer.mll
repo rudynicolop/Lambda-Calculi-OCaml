@@ -11,6 +11,8 @@ rule tokenize = parse
      | ")" { RPAREN }
      | "*" { STAR }
      | "[]" { SQUARE }
+     | "∆"  { TRIANGLE }
+     | "S"  { SUC }
      | "fun" { FUN }
      | "∏" { PI }
      | ":" { COLON }

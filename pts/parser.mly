@@ -1,21 +1,21 @@
 %{
     open Syntax
-    open Triple
 %}
 
 (** Tokens. *)
 %token LPAREN RPAREN EOF
-%token STAR SQUARE
+%token STAR SQUARE TRIANGLE SUC
 %token FUN PI COLON DOT
 %token <string> VAR
 
 (** Start symbol. *)
-%start <cube_sort p_term> prog
+%start <p_term> prog
 
 (** Type annotations. *)
-%type <cube_sort p_term> pabs
-%type <cube_sort p_term> papp
-%type <cube_sort p_term> pvar
+%type <p_term> pabs
+%type <p_term> papp
+%type <p_term> pvar
+%type <sort> psort
 
 %%
 
@@ -33,6 +33,11 @@ papp:
 
 pvar:
   | x=VAR { var x }
-  | STAR  { sort Type }
-  | SQUARE { sort Kind }
+  | s=psort { sort s }
   | LPAREN t=pabs RPAREN { t }
+
+psort:
+  | STAR  { Prop }
+  | SQUARE { Suc Prop }
+  | TRIANGLE { Suc (Suc Prop) }
+  | SUC s=psort { Suc s }
