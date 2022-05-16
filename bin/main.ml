@@ -1,4 +1,5 @@
 open Core
+open Option
 open Util
 open FunUtil
 
@@ -134,10 +135,121 @@ end
 module RunPTS = struct
   open Pts
   open Pipe
+  open Red
 
-  let command.group =
+  let type_term_command parse_and_type =
+    (my_ignore >> parse_and_type |> command_template) type_summary
+
+  let run_term_command run_term red =
+    red |> run_term |> command_template
+
+  let stlc_command =
     Command.group
-      ~summary:"Run a pure type system"
+      ~summary:"Simply-typed lambda calculus in a pure type system."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rule: ( * , * ).")
+      [type_flag, type_term_command STLC_Pipe.parse_and_type;
+       appl_flag, run_term_command STLC_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command STLC_Pipe.run_b_term normal normal_summary]
+
+  let sysf_command =
+    Command.group
+      ~summary:"System F as pure type system."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rules: ( * , * ) ( □ , * ).")
+      [type_flag, type_term_command SystemF_Pipe.parse_and_type;
+       appl_flag, run_term_command SystemF_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command SystemU_Pipe.run_b_term normal normal_summary]
+
+  let omega_command =
+    Command.group
+      ~summary:"Lambda Omega as a pure type system."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rules: ( * , * ) ( □ , □ ).")
+      [type_flag, type_term_command LambdaOmgea_Pipe.parse_and_type;
+       appl_flag, run_term_command LambdaOmgea_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command LambdaOmgea_Pipe.run_b_term normal normal_summary]
+
+  let fomega_command =
+    Command.group
+      ~summary:"System F + Omega as a pure type system."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rules:  ( *  , *  ) ( □ , * ) ( □ , □ ).")
+      [type_flag, type_term_command SysFOmega_Pipe.parse_and_type;
+       appl_flag, run_term_command SysFOmega_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command SysFOmega_Pipe.run_b_term normal normal_summary]
+
+  let lp_command =
+    Command.group
+      ~summary:"Lambda P."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rules: ( * , * ) ( * , □ ).")
+      [type_flag, type_term_command LambdaP_Pipe.parse_and_type;
+       appl_flag, run_term_command LambdaP_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command LambdaP_Pipe.run_b_term normal normal_summary]
+
+  let sysfp_command =
+    Command.group
+      ~summary:"Lambda P + System F."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rules: ( * , * ) ( * , □ ) ( □ , * ).")
+      [type_flag, type_term_command LambdaP_SysF_Pipe.parse_and_type;
+       appl_flag, run_term_command LambdaP_SysF_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command LambdaP_SysF_Pipe.run_b_term normal normal_summary]
+
+  let pomega_command =
+    Command.group
+      ~summary:"Lambda P + Omega."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rules: ( * , * ) ( * , □ ) ( □ , □ ).")
+      [type_flag, type_term_command LambdaP_Omega_Pipe.parse_and_type;
+       appl_flag, run_term_command LambdaP_Omega_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command LambdaP_Omega_Pipe.run_b_term normal normal_summary]
+
+  let coc_command =
+    Command.group
+      ~summary:"The Calculus of Constructions."
+      ?readme:(some $ consume "Sorts: *, □. Axiom: * : □. Rules: ( * , * ) ( * , □ ) ( □ , * ) ( □ , □ ).")
+      [type_flag, type_term_command COC_Pipe.parse_and_type;
+       appl_flag, run_term_command COC_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command COC_Pipe.run_b_term normal normal_summary]
+
+  let hol_command =
+    Command.group
+      ~summary: "Higher Order Logic."
+      ?readme:(some $ consume "Sorts: *, □, ∆. Axioms: * : □, □ : ∆. Rules: ( * , * ) ( □ , * ) ( □ , □ ).")
+      [type_flag, type_term_command Lambda_HOL_Pipe.parse_and_type;
+       appl_flag, run_term_command Lambda_HOL_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command Lambda_HOL_Pipe.run_b_term normal normal_summary]
+
+  let holext_command =
+    Command.group
+      ~summary:"Higher Order Logic extended with ( ∆ , * )."
+      ?readme:(some $ consume
+                 "Sorts: *, □, ∆. Axioms: * : □, □ : ∆. Rules: ( * , * ) ( □ , * ) ( □ , □ ) ( ∆ , * ). ")
+      [type_flag, type_term_command Lambda_HOL_Extended_Pipe.parse_and_type;
+       appl_flag, run_term_command
+         Lambda_HOL_Extended_Pipe.run_b_term
+         appl appl_summary;
+       normal_flag, run_term_command
+         Lambda_HOL_Extended_Pipe.run_b_term
+         normal normal_summary]
+
+  let sysu_minus_command =
+    Command.group
+      ~summary:"System U-."
+      ?readme:(some $ consume
+                 "Sorts: *, □, ∆. Axioms: * : □, □ : ∆. Rules: ( * , * ) ( □ , * ) ( □ , □ ) ( ∆ , □ ).")
+      [type_flag, type_term_command System_U_Minus_Pipe.parse_and_type;
+       appl_flag, run_term_command System_U_Minus_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command System_U_Minus_Pipe.run_b_term normal normal_summary]
+
+  let sysu_command =
+    Command.group
+      ~summary:"System U."
+      ?readme:(some $
+               consume
+                 "Sorts: *, □, ∆. Axioms: * : □, □ : ∆. Rules: ( * , * ) ( □ , * ) ( □ , □ ) ( ∆ , * ) ( ∆ , □ ).")
+      [type_flag, type_term_command SystemU_Pipe.parse_and_type;
+       appl_flag, run_term_command SystemU_Pipe.run_b_term appl appl_summary;
+       normal_flag, run_term_command SystemU_Pipe.run_b_term normal normal_summary]
+  
+  let command =
+    Command.group
+      ~summary:"Run a pure type system."
       ["-stlc",stlc_command;
        "-sysf",sysf_command;
        "-omega",omega_command;
