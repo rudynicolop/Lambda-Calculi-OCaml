@@ -131,6 +131,27 @@ module RunFomega = struct
        normal_flag, run_b_term_command normal normal_summary]
 end
 
+module RunPTS = struct
+  open Pts
+  open Pipe
+
+  let command.group =
+    Command.group
+      ~summary:"Run a pure type system"
+      ["-stlc",stlc_command;
+       "-sysf",sysf_command;
+       "-omega",omega_command;
+       "-fomega",fomega_command;
+       "-lp",lp_command;
+       "-sysfp",sysfp_command;
+       "-pomega",pomega_command;
+       "-coc",coc_command;
+       "-hol",hol_command;
+       "-holext",holext_command;
+       "-sysu-",sysu_minus_command;
+       "-sysu",sysu_command]
+end
+
 let command =
   Command.group
     ~summary:"Implementations of various lambda calculi"
@@ -138,6 +159,7 @@ let command =
      "stlc", RunStlc.command;
      "sf",RunSF.command;
      "omega",RunOmega.command;
-     "fomega",RunFomega.command]
+     "fomega",RunFomega.command;
+     "pts", RunPTS.command]
 
 let () = Command.run ~version:"1.0" command
