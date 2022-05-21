@@ -52,7 +52,7 @@ module Judge (SAR : Triple) = struct
       end
     | Abs (_,e1,e2) ->
       let open Result in
-      e1 :: g |- e2 >>= fun t2 ->
+      List.map ~f:(rename ((+) 1)) $ e1 :: g |- e2 >>= fun t2 ->
       g |- pi () e1 t2 >>| fun _ -> pi () e1 t2
       (*print_endline $ "Typing " ^ string_of_b_term (abs () e1 e2);
       let open Result in
@@ -74,7 +74,7 @@ module Judge (SAR : Triple) = struct
     | Pi (_,e1,e2) ->
       let open Result in
       g |- e1 >>= fun t1 ->
-      t1 :: List.map ~f:(rename ((+) 1)) g |- e2 >>= fun t2 ->
+      List.map ~f:(rename ((+) 1)) $ t1 :: (*List.map ~f:(rename ((+) 1))*) g |- e2 >>= fun t2 ->
       begin match weak_norm t1, weak_norm t2 with
         | Sort s1, Sort s2 ->
           begin match rules s1 s2 with
