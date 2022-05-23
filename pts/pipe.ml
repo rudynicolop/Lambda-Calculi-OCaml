@@ -27,6 +27,11 @@ let string_of_b_type_error : type_error -> string = function
     ^ "term " ^ string_of_b_term e1 ^ "\n"
     ^ "is expected to have a ∏-type,\n"
     ^ "but has type " ^ string_of_b_term t1
+  | TypMismatch (_,e1,e2,t,t2) ->
+    "In application " ^ string_of_b_term (app e1 e2) ^ ",\n"
+    ^ "term " ^ string_of_b_term e2 ^ "\n"
+    ^ "is expected to have type " ^ string_of_b_term t ^ ",\n"
+    ^ "but has type " ^ string_of_b_term t2
   | BadPiLeft (_,e1,e2,t1) ->
     "In term " ^ string_of_b_term (pi () e1 e2) ^ ",\n"
     ^ "parameter type " ^ string_of_b_term e1 ^ ",\n"
@@ -60,58 +65,68 @@ let string_of_p_type_error : type_error -> string = function
     x
     |> var
     |> p_of_b_term (List.length g)
-    |> string_of_p_term
+    |> fancy_string_of_p_term
     |> (^) "Unbound variable "
   | BadAbsParam (g,e1,e2,t1) ->
     let depth = List.length g in
     let e = p_of_b_term depth $ abs () e1 e2 in
     let e1 = p_of_b_term depth e1 in
     let t1 = p_of_b_term depth t1 in
-    "In abstraction " ^ string_of_p_term e ^ ",\n"
-    ^ "parameter type " ^ string_of_p_term e1 ^ "\n"
+    "In abstraction " ^ fancy_string_of_p_term e ^ ",\n"
+    ^ "parameter type " ^ fancy_string_of_p_term e1 ^ "\n"
     ^ "is expected have a sort type,\n"
-    ^ "but has type " ^ string_of_p_term t1
+    ^ "but has type " ^ fancy_string_of_p_term t1
   | IllegalApp (g,e1,e2,t1) ->
     let depth = List.length g in
     let e = p_of_b_term depth $ app e1 e2 in
     let e1 = p_of_b_term depth e1 in
     let t1 = p_of_b_term depth t1 in
-    "In application " ^ string_of_p_term e ^ ",\n"
-    ^ "term " ^ string_of_p_term e1 ^ "\n"
+    "In application " ^ fancy_string_of_p_term e ^ ",\n"
+    ^ "term " ^ fancy_string_of_p_term e1 ^ "\n"
     ^ "is expected to have a ∏-type,\n"
-    ^ "but has type " ^ string_of_p_term t1
+    ^ "but has type " ^ fancy_string_of_p_term t1
+  | TypMismatch (g,e1,e2,t,t2) ->
+    let depth = List.length g in
+    let e1 = p_of_b_term depth e1 in
+    let e2 = p_of_b_term depth e2 in    
+    let t2 = p_of_b_term depth t2 in
+    let t = p_of_b_term depth t in
+    "In application " ^ fancy_string_of_p_term (app e1 e2) ^ ",\n"
+    ^ "term " ^ fancy_string_of_p_term e2 ^ "\n"
+    ^ "is expected to have type " ^ fancy_string_of_p_term t ^ ",\n"
+    ^ "but has type " ^ fancy_string_of_p_term t2
   | BadPiLeft (g,e1,e2,t1) ->
     let depth = List.length g in
     let e = p_of_b_term depth $ pi () e1 e2 in
     let e1 = p_of_b_term depth e1 in
     let t1 = p_of_b_term depth t1 in
-    "In term " ^ string_of_p_term e ^ ",\n"
-    ^ "parameter type " ^ string_of_p_term e1 ^ ",\n"
+    "In term " ^ fancy_string_of_p_term e ^ ",\n"
+    ^ "parameter type " ^ fancy_string_of_p_term e1 ^ ",\n"
     ^ "is expected to have a sort type,\n"
-    ^ "but has type " ^ string_of_p_term t1
+    ^ "but has type " ^ fancy_string_of_p_term t1
   | BadPiRight (g,e1,e2,t2) ->
     let depth = List.length g in
     let e = p_of_b_term depth $ pi () e1 e2 in
     let e2 = p_of_b_term (1 + depth) e2 in
     let t2 = p_of_b_term (1 + depth) t2 in
-    "In term " ^ string_of_p_term e ^ ",\n"
-    ^ "return type " ^ string_of_p_term e2 ^ ",\n"
+    "In term " ^ fancy_string_of_p_term e ^ ",\n"
+    ^ "return type " ^ fancy_string_of_p_term e2 ^ ",\n"
     ^ "is expected to have a sort type,\n"
-    ^ "but has type " ^ string_of_p_term t2
+    ^ "but has type " ^ fancy_string_of_p_term t2
   | NoAxiom s ->
     "In this system there is no sort s such that " ^ string_of_sort s ^ ":s."
   | NoRulePi (g,t1,t2,s1,s2) ->
     let depth = List.length g in
     let t = p_of_b_term depth $ pi () t1 t2 in
-    "For term " ^ string_of_p_term t ^ "\n"
+    "For term " ^ fancy_string_of_p_term t ^ "\n"
     ^ "there is no rule relating sorts "
     ^ string_of_sort s1 ^ " and " ^ string_of_sort s2
   | NoRuleAbs (g,e1,e2,t2,s1,s2) ->
     let depth = List.length g in
     let e = p_of_b_term depth $ abs () e1 e2 in
     let t = p_of_b_term depth $ pi  () e1 t2 in
-    "For term " ^ string_of_p_term e ^ ",\n"
-    ^ "of type " ^ string_of_p_term t ^ ".\n"
+    "For term " ^ fancy_string_of_p_term e ^ ",\n"
+    ^ "of type " ^ fancy_string_of_p_term t ^ ".\n"
     ^ "there is no rule relating sorts "
     ^ string_of_sort s1 ^ " and " ^ string_of_sort s2
   | BadAbsResult (g,e1,e2,t2,t) ->
@@ -120,18 +135,18 @@ let string_of_p_type_error : type_error -> string = function
     let e2 = p_of_b_term (1 + depth) e2 in
     let t2 = p_of_b_term (1 + depth) t2 in
     let t = p_of_b_term (1 + depth) t in
-    "For term " ^ string_of_p_term e ^ ",\n"
-    ^ "result " ^ string_of_p_term e2 ^ "\n"
-    ^ "has type " ^ string_of_p_term t2 ^ ",\n"
+    "For term " ^ fancy_string_of_p_term e ^ ",\n"
+    ^ "result " ^ fancy_string_of_p_term e2 ^ "\n"
+    ^ "has type " ^ fancy_string_of_p_term t2 ^ ",\n"
     ^ "which is expected to have a sort type,\n"
-    ^ "but has type " ^ string_of_p_term t
+    ^ "but has type " ^ fancy_string_of_p_term t
 
 let repl_b_term (red : b_term -> b_term option) (e : b_term) : unit =
   e
   |> multi_red red
     begin print_endline
       >> (fun str -> str ^ " -->")
-      >> string_of_p_term
+      >> fancy_string_of_p_term
       >> p_of_b_term 0
     end
   |> ignore
@@ -143,15 +158,20 @@ module Pipeline (SAR : Triple) = struct
   let parse_and_type (filename : string) : b_term option =
   let e = filename
           |> term_of_file
+          |>
+          begin fun e ->
+            "Input:\n" ^ string_of_p_term e |> print_endline; e
+          end
           |> b_of_p_term [] in
-            "Program parsed as:\n" ^ (string_of_b_term (*>> p_of_b_term 0*)) e
+  "Program parsed as:\n" ^ (fancy_string_of_p_term >> p_of_b_term 0) e
   |> print_endline;
+  "Debug:\n" ^ string_of_b_term e |> print_endline;
   match [] |- e with
   | Result.Ok t ->
     t
     |> Equiv.weak_norm
-    (*|> p_of_b_term 0*)
-    |> string_of_b_term
+    |> p_of_b_term 0
+    |> fancy_string_of_p_term
     |> (^) "Program has type "
     |> print_endline; Some e
   | Result.Error err ->

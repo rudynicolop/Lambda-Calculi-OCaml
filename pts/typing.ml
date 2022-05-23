@@ -18,6 +18,7 @@ type type_error =
   | BadAbsParam of b_term list * b_term * b_term * b_term
   | BadAbsResult of b_term list * b_term * b_term * b_term * b_term
   | IllegalApp of b_term list * b_term * b_term * b_term
+  | TypMismatch of b_term list * b_term * b_term * b_term * b_term
   | BadPiLeft of b_term list * b_term * b_term * b_term
   | BadPiRight of b_term list * b_term * b_term * b_term
   | NoRulePi of b_term list * b_term * b_term * sort * sort
@@ -29,7 +30,6 @@ module Judge (SAR : Triple) = struct
   (** Typing judgement. *)
   let rec (|-) (g : b_term list)
     : b_term -> (b_term, type_error) Result.t =
-    print_endline $ "Context is " ^ string_of_list string_of_b_term g;
     function
     | Sort s ->
       begin match axioms s with
@@ -45,23 +45,23 @@ module Judge (SAR : Triple) = struct
       let open Result in
       g |- e1 >>= fun t1 ->
       g |- e2 >>= fun t2 ->
+      "t1: " ^ string_of_b_term t1 |> print_endline;
+      "t2: " ^ string_of_b_term t2 |> print_endline;
+      "e2: " ^ string_of_b_term e2 |> print_endline;
       begin match weak_norm t1 with
-        | Pi (_,t,t') when t == t2 ->
-          return $ sub ~arg:e2 t'
+        | Pi (_,t,t') when t == weak_norm t2 ->
+          let se2t' = sub ~arg:e2 t' in
+          "t' [ e2 ]: " ^ string_of_b_term se2t'
+          |> print_endline;
+          return $ se2t'
+        | Pi (_,t,_) -> fail $ TypMismatch (g,e1,e2,t,t2)
         | _ -> fail $ IllegalApp (g,e1,e2,t1)
       end
     | Abs (_,e1,e2) ->
       let open Result in
+      g |- e1 >>= fun t1 ->
       List.map ~f:(rename ((+) 1)) $ e1 :: g |- e2 >>= fun t2 ->
-      g |- pi () e1 t2 >>| fun _ -> pi () e1 t2
-      (*print_endline $ "Typing " ^ string_of_b_term (abs () e1 e2);
-      let open Result in
-        g |- e1 >>= fun t1 ->
-      print_endline $ "Param " ^ string_of_b_term e1 ^ " has type " ^ string_of_b_term t1;
-      e1 :: List.map ~f:(rename ((+) 1)) g |- e2 >>= fun t2 ->
-      print_endline $ "Result " ^ string_of_b_term e2 ^ " has type " ^ string_of_b_term t2;
-      e1 :: List.map ~f:(rename ((+) 1)) g |- t2 >>= fun t2' ->
-      print_endline $ "Result type " ^ string_of_b_term t2 ^ " has type " ^ string_of_b_term t2';
+      List.map ~f:(rename ((+) 1)) $ e1 :: g |- t2 >>= fun t2' ->
       begin match weak_norm t1, weak_norm t2' with
         | Sort s1, Sort s2 ->
           begin match rules s1 s2 with 
@@ -70,11 +70,11 @@ module Judge (SAR : Triple) = struct
           end
         | Sort _, t -> fail $ BadAbsResult (g,e1,e2,t2,t)
         | t, _ -> fail $ BadAbsParam (g,e1,e2,t)
-        end*)
+        end
     | Pi (_,e1,e2) ->
       let open Result in
       g |- e1 >>= fun t1 ->
-      List.map ~f:(rename ((+) 1)) $ t1 :: (*List.map ~f:(rename ((+) 1))*) g |- e2 >>= fun t2 ->
+      List.map ~f:(rename ((+) 1)) $ e1 :: g |- e2 >>= fun t2 ->
       begin match weak_norm t1, weak_norm t2 with
         | Sort s1, Sort s2 ->
           begin match rules s1 s2 with

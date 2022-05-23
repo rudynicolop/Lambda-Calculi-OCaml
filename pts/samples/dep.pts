@@ -1,0 +1,1 @@
+fun A : *. fun B : ∏ a:A. *. fun a : A. B a

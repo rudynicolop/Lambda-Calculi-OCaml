@@ -77,5 +77,27 @@ let rec string_of_term (f : 'a -> string) (g : 'b -> string)
   | App (t1,t2) ->
     "(" ^ string_of_term f g t1 ^ " " ^ string_of_term f g t2  ^ ")"
 
-let string_of_p_term : p_term -> string = string_of_term (fun x -> x ^ ":") id
+let string_of_p_term : p_term -> string = string_of_term id (fun x -> x ^ ":")
 let string_of_b_term : b_term -> string = string_of_term string_of_int $ consume ""
+
+let rec occurs_p_term (y : string) : p_term -> bool =
+  let open String in
+  function
+  | Sort _ -> false
+  | Var x -> x = y
+  | Abs (x,t1,t2)
+  | Pi (x,t1,t2) -> occurs_p_term y t1 || if x = y then false else occurs_p_term y t2
+  | App (t1,t2) -> occurs_p_term y t1 || occurs_p_term y t2
+
+let rec fancy_string_of_p_term : p_term -> string = function
+  | Sort s -> string_of_sort s
+  | Var x -> x
+  | App (t1,t2) ->
+    "(" ^ fancy_string_of_p_term t1 ^ " " ^ fancy_string_of_p_term t2  ^ ")"
+  | Abs (x,t1,t2) ->
+    "(λ" ^ x ^ ":" ^ fancy_string_of_p_term t1 ^ "." ^ fancy_string_of_p_term t2 ^ ")"
+  | Pi (x,t1,t2) ->
+    if occurs_p_term x t2 then
+      "(∀" ^ x ^ ":" ^ fancy_string_of_p_term t1 ^ "," ^ fancy_string_of_p_term t2 ^ ")"
+    else
+      "(" ^ fancy_string_of_p_term t1 ^ "→" ^ fancy_string_of_p_term t2 ^ ")"
