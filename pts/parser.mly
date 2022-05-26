@@ -5,7 +5,7 @@
 (** Tokens. *)
 %token LPAREN RPAREN EOF
 %token STAR SQUARE TRIANGLE SUC
-%token FUN PI COLON DOT
+%token FUN PI COLON DOT ARROW
 %token <string> VAR
 
 (** Start symbol. *)
@@ -13,6 +13,7 @@
 
 (** Type annotations. *)
 %type <p_term> pabs
+%type <p_term> parrow
 %type <p_term> papp
 %type <p_term> pvar
 %type <sort> psort
@@ -24,7 +25,11 @@ prog:
 
 pabs:
   | FUN x=VAR COLON t1=pabs DOT t2=pabs { abs x t1 t2 }
-  | PI  x=VAR COLON t1=pabs DOT t2=pabs { pi  x t1 t2 }
+  | PI  x=VAR COLON t1=pabs DOT t2=pabs { pi (Some x) t1 t2 }
+  | t=parrow { t }
+
+parrow:
+  | t1=papp ARROW t2=parrow { pi None t1 t2 }
   | t=papp { t }
 
 papp:

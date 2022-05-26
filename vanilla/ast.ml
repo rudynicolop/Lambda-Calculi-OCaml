@@ -31,7 +31,11 @@ type h_expr =
     [\x.\y.x -> \.\.1] *)
 let rec b_expr_of_p_expr (ctx : string list) (e : p_expr) : b_expr =
   match e with
-  | Var x -> Var (ListUtil.index_of_default String.(=) x ctx)
+  | Var x ->
+    Var
+      (ListUtil.index_of ~eq:String.(=) x ctx
+       |> Option.value_map
+         ~f:FunUtil.id ~default:(List.length ctx))
   | Lam (x,e) -> Lam ((), b_expr_of_p_expr (x :: ctx) e)
   | App (e1,e2) -> App (b_expr_of_p_expr ctx e1, b_expr_of_p_expr ctx e2)
 

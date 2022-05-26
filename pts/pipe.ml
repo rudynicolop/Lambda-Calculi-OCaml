@@ -160,7 +160,7 @@ module Pipeline (SAR : Triple) = struct
           |> term_of_file
           |>
           begin fun e ->
-            "Input:\n" ^ string_of_p_term e |> print_endline; e
+            "Input:\n" ^ fancy_string_of_p_term e |> print_endline; e
           end
           |> b_of_p_term [] in
   "Program parsed as:\n" ^ (fancy_string_of_p_term >> p_of_b_term 0) e
@@ -175,8 +175,8 @@ module Pipeline (SAR : Triple) = struct
     |> (^) "Program has type "
     |> print_endline; Some e
   | Result.Error err ->
-    string_of_b_type_error err |> print_endline; None
-
+    string_of_p_type_error err |> print_endline; None
+    
   let run_b_term (red : b_term -> b_term option) (filename : string) : unit =
     match parse_and_type filename with
     | None -> ()

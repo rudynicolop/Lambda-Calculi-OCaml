@@ -112,13 +112,21 @@ let map_term_ctx
 let b_of_p_typ (o: string list) : p_typ -> b_typ =
   map_typ_ctx
     ~ctx:o ~f:List.cons
-    ~var:(switch $ ListUtil.index_of_default String.(=))
+    ~var:(fun o a ->
+        ListUtil.index_of ~eq:String.(=) a o
+        |> Option.value_map
+          ~default:(List.length o)
+          ~f:id)
     ~all:(consume my_ignore) ~abs:(consume my_ignore)
 
 let b_of_p_term (tyo: string list) (o: string list) : p_term -> b_term =
   map_term_ctx
     ~tctx:tyo ~ctx:o ~f:List.cons ~ty:b_of_p_typ
-    ~var:(switch $ ListUtil.index_of_default String.(=))
+    ~var:(fun o a ->
+        ListUtil.index_of ~eq:String.(=) a o
+        |> Option.value_map
+          ~default:(List.length o)
+          ~f:id)
     ~abs:(consume my_ignore) ~tabs:(consume my_ignore)
 
 let p_of_b_typ (d: int) : b_typ -> p_typ =

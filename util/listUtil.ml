@@ -1,13 +1,15 @@
 open Core
 
 (** Get index of (first occurence of) element in list *)
-let rec index_of (eqb : 'a -> 'a -> bool) (a : 'a)
+let rec index_of ~eq:(eq : 'a -> 'a -> bool) (a : 'a)
   : 'a list -> int option = function
   | [] -> None
   | h :: t ->
-    if eqb h a then Some 0 else Option.(index_of eqb a t >>| (+) 1)
+    if eq h a then Some 0 else Option.(index_of ~eq:eq a t >>| (+) 1)
 
-let index_of_default (eqb: 'a -> 'a -> bool) (a: 'a) (l: 'a list) : int =
-  match index_of eqb a l with
-  | Some n -> n
-  | None -> List.length l
+(** Get index of optional list. *)
+let rec index_of_options ~eq:(eq : 'a -> 'a -> bool) (a : 'a)
+  : 'a option list -> int option = function
+  | [] -> None
+  | Some h :: _ when eq h a -> Some 0
+  | _ :: t -> Option.(index_of_options ~eq:eq a t >>| (+) 1)

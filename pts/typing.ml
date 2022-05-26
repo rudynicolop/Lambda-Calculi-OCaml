@@ -45,15 +45,15 @@ module Judge (SAR : Triple) = struct
       let open Result in
       g |- e1 >>= fun t1 ->
       g |- e2 >>= fun t2 ->
-      "t1: " ^ string_of_b_term t1 |> print_endline;
+      (*"t1: " ^ string_of_b_term t1 |> print_endline;
       "t2: " ^ string_of_b_term t2 |> print_endline;
-      "e2: " ^ string_of_b_term e2 |> print_endline;
+        "e2: " ^ string_of_b_term e2 |> print_endline;*)
       begin match weak_norm t1 with
         | Pi (_,t,t') when t == weak_norm t2 ->
-          let se2t' = sub ~arg:e2 t' in
+          (*let se2t' = sub ~arg:e2 t' in
           "t' [ e2 ]: " ^ string_of_b_term se2t'
-          |> print_endline;
-          return $ se2t'
+            |> print_endline; *)
+          return $ sub ~arg:e2 t'
         | Pi (_,t,_) -> fail $ TypMismatch (g,e1,e2,t,t2)
         | _ -> fail $ IllegalApp (g,e1,e2,t1)
       end

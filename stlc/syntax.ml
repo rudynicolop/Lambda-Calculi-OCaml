@@ -40,7 +40,11 @@ let rec (=?) (a : typ) (b : typ) : bool =
 
 (** Parsed to De Bruijn Syntax. *)
 let rec b_of_p_expr (stk : string list) : p_expr -> b_expr = function
-  | Var x -> Var (ListUtil.index_of_default String.(=) x stk)
+  | Var x ->
+    Var
+      (ListUtil.index_of ~eq:String.(=) x stk
+       |> Option.value_map
+         ~f:FunUtil.id ~default:(List.length stk))
   | Abs (x,t,e) -> Abs ((), t, b_of_p_expr (x :: stk) e)
   | App (e1,e2) -> App (b_of_p_expr stk e1, b_of_p_expr stk e2)
 

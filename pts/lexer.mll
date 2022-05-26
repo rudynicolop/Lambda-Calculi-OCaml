@@ -13,6 +13,7 @@ rule tokenize = parse
      | "[]" { SQUARE }
      | "∆"  { TRIANGLE }
      | "S"  { SUC }
+     | "->" { ARROW }
      | "fun" { FUN }
      | "∏" { PI }
      | ":" { COLON }
